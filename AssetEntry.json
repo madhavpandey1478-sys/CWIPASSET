@@ -1,7 +1,7 @@
 
 {
   "id": "com.madhav.cwipassetentry",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "name": "CWIP Asset Entry",
   "description": "CWIP asset capitalisation data entry widget",
   "newInstancePrefix": "CWIPAssetEntry",
@@ -30,7 +30,7 @@
   "methods": {
     "getLastEvent": {
       "returnType": "string",
-      "description": "Returns the last event payload. Split by '|' to parse."
+      "description": "Returns the last event payload."
     },
     "getData": {
       "returnType": "string",
@@ -41,12 +41,12 @@
       "description": "Returns selected rows as a JSON string."
     },
     "setData": {
-      "description": "Replaces all rows. Call after retrieving data from the SAC model.",
+      "description": "Replaces all rows. Each row should contain assetId, assetClass, and capitalizedMonth.",
       "parameters": [
         {
           "name": "data",
           "type": "string",
-          "description": "JSON array of row objects containing assetId, assetClass, and capitalizedMonth."
+          "description": "JSON array of asset records. Use YYYY-MM for capitalizedMonth."
         }
       ]
     },
@@ -66,12 +66,22 @@
         {
           "name": "value",
           "type": "string",
-          "description": "Value to set. Capitalized Month should use YYYY-MM."
+          "description": "Value to set."
+        }
+      ]
+    },
+    "setOptions": {
+      "description": "Sets the default Asset Class dropdown options.",
+      "parameters": [
+        {
+          "name": "options",
+          "type": "string",
+          "description": "JSON array of values or objects with value and text properties."
         }
       ]
     },
     "setRowOptions": {
-      "description": "Sets Asset Class dropdown options.",
+      "description": "Sets Asset Class dropdown options for a particular row.",
       "parameters": [
         {
           "name": "rowIndex",
@@ -86,36 +96,26 @@
         {
           "name": "options",
           "type": "string",
-          "description": "JSON array of dropdown values or objects containing value and text."
-        }
-      ]
-    },
-    "setOptions": {
-      "description": "Sets the available Asset Class dropdown options.",
-      "parameters": [
-        {
-          "name": "options",
-          "type": "string",
-          "description": "JSON array, for example ['Machinery','Buildings'] or [{\"value\":\"MACH\",\"text\":\"Machinery\"}]."
+          "description": "JSON array of dropdown values or objects with value and text properties."
         }
       ]
     }
   },
   "events": {
     "onReady": {
-      "description": "Fires when the widget is mounted. Use it to initialize data and dropdown options."
+      "description": "Fires when the widget is mounted."
     },
     "onDataChange": {
-      "description": "Fires when Load Data, Save Changes, row selection, or Clear is used. Read getLastEvent() to identify the action."
+      "description": "Fires for loadData, saveChanges, row selection, and selectAll. Use getLastEvent() to read the payload."
     },
     "onFieldChange": {
-      "description": "Fires when Asset Class or Capitalized Month is changed."
+      "description": "Fires when Asset Class or Capitalized Month changes. Payload: fieldChange|rowIndex|fieldName|value."
     },
     "onValidate": {
-      "description": "Fires when Validate is clicked. getLastEvent() returns VALID|0 or INVALID|n."
+      "description": "Fires when Validate is clicked. Payload: VALID|0 or INVALID|n."
     },
     "onClear": {
-      "description": "Fires when editable values are cleared."
+      "description": "Fires when editable values are cleared. Payload: clear|rowCount."
     }
   }
 }
