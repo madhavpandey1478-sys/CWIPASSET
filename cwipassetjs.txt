@@ -1,28 +1,158 @@
-        .sico svg {
-            display:block;
-        }
-    `;
+(function () {
+    "use strict";
+
+    /* =========================================================
+       CWIP ASSET ENTRY WIDGET
+       Fields: Asset ID (readonly), Asset Class (dropdown),
+               Capitalized Month (dropdown)
+       ========================================================= */
+
+    var ALL_FIELDS = ["assetId", "assetClass", "capitalizedMonth"];
+
+    var COLS = [
+        { field: "assetId",           label: "Asset ID",           type: "text",   width: 180, readonly: true  },
+        { field: "assetClass",        label: "Asset Class",        type: "select", width: 220                  },
+        { field: "capitalizedMonth",  label: "Capitalized Month",  type: "select", width: 220                  }
+    ];
+
+    var MANDATORY = ["assetClass", "capitalizedMonth"];
+
+    /* ── Icons ── */
+    var ICON_DEL   = '<svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M4 6h12M8 6V4.5A1 1 0 0 1 9 3.5h2a1 1 0 0 1 1 1V6M6 6l.6 9.4a1 1 0 0 0 1 .9h4.8a1 1 0 0 0 1-.9L14 6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var ICON_CHECK = '<svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M4 10.5l3.5 3.5L16 5.5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+    var ICON_SAVE  = '<svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M4 4h9l3 3v9a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M7 4v4h6V4" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><rect x="6" y="11" width="8" height="5" stroke="currentColor" stroke-width="1.4"/></svg>';
+    var ICON_CLEAR = '<svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>';
+    var ICON_LOAD  = '<svg width="13" height="13" viewBox="0 0 20 20" fill="none"><path d="M10 3v9m0 0l-3.5-3.5M10 12l3.5-3.5M4 15h12" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+    /* =========================================================
+       STYLES
+       ========================================================= */
+    var STYLES = [
+        ":host{display:block;width:100%;height:auto;min-height:120px;",
+        "font-family:'72','72full',Arial,Helvetica,sans-serif;color:#1d2d3e;",
+        "--blue:#0070f2;--blue-dark:#0040c1;--blue-light:#e5f1ff;",
+        "--border:#d7e0e8;--border-dark:#c4d0db;--header:#eef4fa;",
+        "--surface:#fff;--surface-soft:#f7f9fb;",
+        "--error:#bb0000;--error-bg:#fdecec;--error-border:#e2a0a0;",
+        "box-sizing:border-box;}",
+        "*{box-sizing:border-box;}",
+
+        ".container{width:100%;height:auto;display:flex;flex-direction:column;",
+        "background:#fff;border:1px solid var(--border);border-radius:10px;",
+        "overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);}",
+
+        ".toolbar{min-height:54px;display:flex;flex-wrap:wrap;align-items:center;",
+        "justify-content:flex-end;gap:8px;row-gap:8px;padding:10px 14px;",
+        "background:#fff;border-bottom:1px solid var(--border);}",
+
+        "button{height:34px;padding:0 14px;border:1px solid #c2c9d1;border-radius:8px;",
+        "background:#fff;color:var(--blue);font-family:inherit;font-size:12px;font-weight:600;",
+        "cursor:pointer;display:inline-flex;align-items:center;gap:6px;",
+        "transition:background .15s,border-color .15s,transform .05s;white-space:nowrap;}",
+        "button:hover{background:var(--blue-light);border-color:#9fc2f2;}",
+        "button:active{transform:translateY(1px);}",
+        "button.primary{color:#fff;background:var(--blue);border-color:var(--blue);}",
+        "button.primary:hover{background:var(--blue-dark);border-color:var(--blue-dark);}",
+        "button.del{color:#bb0000;border-color:#e4b2b2;background:#fffafa;}",
+        "button.del:hover{background:#fdeaea;border-color:#d98c8c;}",
+        "button svg{flex:0 0 auto;}",
+
+        ".table-area{flex:0 1 auto;min-width:0;max-height:520px;overflow:auto;background:#fff;",
+        "scrollbar-width:thin;scrollbar-color:#aebdca #f2f5f7;}",
+        ".table-area::-webkit-scrollbar{width:10px;height:10px;}",
+        ".table-area::-webkit-scrollbar-track{background:#f3f6f8;}",
+        ".table-area::-webkit-scrollbar-thumb{background:#b5c2cd;border-radius:8px;border:2px solid #f3f6f8;}",
+
+        "table{border-collapse:collapse;table-layout:fixed;min-width:680px;width:680px;}",
+
+        "th{position:sticky;top:0;z-index:6;height:40px;padding:0 12px;",
+        "background:var(--header);color:#29465f;border-bottom:1px solid #cbd8e3;",
+        "font-size:11px;font-weight:700;text-align:left;white-space:nowrap;vertical-align:middle;}",
+
+        "td{padding:6px 8px;background:#fff;border-bottom:1px solid #e9edf1;",
+        "vertical-align:middle;position:relative;}",
+        "tr:hover td{background:#f9fbfd;}",
+        "tr.sel td{background:var(--blue-light);}",
+        "tr.sel:hover td{background:#d7e9ff;}",
+        "tr.err td{background:var(--error-bg);}",
+        "tr.err:hover td{background:#fbdede;}",
+        "tr.sel.err td{background:#fbdcdc;}",
+
+        ".field-error{margin-top:3px;font-size:10px;line-height:1.3;color:var(--error);}",
+
+        "input.cell{width:100%;height:34px;padding:0 9px;border:1px solid #bfd0df;",
+        "border-radius:6px;background:#fff;color:#253746;font-family:inherit;font-size:12px;outline:none;}",
+        "input.cell.ro{background:#f1f4f7;color:#607487;cursor:not-allowed;}",
+        "input.cell.ce{border-color:var(--error-border);background:#fffafa;}",
+
+        ".cw{position:relative;width:100%;}",
+        ".ct{width:100%;height:34px;padding:0 9px;border:1px solid #bfd0df;border-radius:6px;",
+        "background:#fff;color:#253746;font-family:inherit;font-size:12px;font-weight:400;",
+        "display:flex;align-items:center;justify-content:space-between;gap:6px;",
+        "cursor:pointer;transition:border-color .15s,box-shadow .15s;}",
+        ".ct:hover{border-color:#9fb5c8;}",
+        ".ct.open{border-color:var(--blue);box-shadow:0 0 0 2px rgba(10,110,209,.1);}",
+        ".ct.ce{border-color:var(--error-border);background:#fffafa;}",
+        ".ct-text{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;text-align:left;color:#253746;}",
+        ".ct-text.ph{color:#8797a6;}",
+        ".ct-chev{flex:0 0 auto;color:#5f7284;transition:transform .15s;}",
+        ".ct.open .ct-chev{transform:rotate(180deg);color:var(--blue);}",
+
+        ".cp{position:absolute;top:calc(100% + 4px);left:0;width:max(240px,100%);",
+        "background:#fff;border:1px solid var(--border-dark);border-radius:8px;",
+        "box-shadow:0 10px 26px rgba(15,40,65,.16),0 2px 6px rgba(15,40,65,.08);",
+        "z-index:99;overflow:hidden;}",
+
+        ".cs{display:flex;align-items:center;gap:6px;padding:8px 10px;",
+        "border-bottom:1px solid var(--border);background:var(--surface-soft);}",
+        ".cs-icon{flex:0 0 auto;color:var(--blue);}",
+        ".cs-inp{flex:1;min-width:0;border:none;outline:none;background:transparent;",
+        "font-family:inherit;font-size:12px;color:#253746;}",
+        ".cs-inp::placeholder{color:#8797a6;}",
+        ".cs-clr{flex:0 0 auto;border:none;background:transparent;color:#8797a6;",
+        "font-size:15px;cursor:pointer;padding:2px 4px;border-radius:4px;}",
+        ".cs-clr:hover{color:#5f7284;background:rgba(0,0,0,.04);}",
+
+        ".co-list{max-height:200px;overflow-y:auto;}",
+        ".co-item{padding:9px 12px;font-size:12px;color:#253746;cursor:pointer;",
+        "white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}",
+        ".co-item:hover{background:var(--blue-light);}",
+        ".co-item.picked{background:var(--blue-light);color:var(--blue-dark);font-weight:600;}",
+        ".co-empty{padding:14px 12px;font-size:12px;color:#8797a6;text-align:center;}",
+
+        ".chk-cell{width:46px;min-width:46px;max-width:46px;padding:0;text-align:center;}",
+        ".chk{width:17px;height:17px;margin:0;cursor:pointer;accent-color:var(--blue);vertical-align:middle;}",
+
+        ".status{min-height:34px;display:flex;align-items:center;gap:20px;padding:0 12px;",
+        "background:#f7f9fb;border-top:1px solid var(--border);color:#5f7284;font-size:11px;white-space:nowrap;}",
+        ".si{display:inline-flex;align-items:center;gap:4px;}",
+        ".sv{color:#314a60;font-weight:700;}",
+        ".sv.ok{color:#107e3e;}",
+        ".sv.bad{color:#bb0000;}",
+        ".sico{display:inline-flex;align-items:center;margin-right:2px;}",
+        ".sico svg{display:block;}"
+    ].join("");
 
     /* =========================================================
        TEMPLATE
        ========================================================= */
     var tmpl = document.createElement("template");
-
     tmpl.innerHTML =
-        '<style>' + STYLES + '</style>' +
+        "<style>" + STYLES + "</style>" +
         '<div class="container">' +
-            '<div class="tab-bar" id="tabBar"></div>' +
-            '<div class="toolbar" id="toolbar"></div>' +
-            '<div class="table-area">' +
-                '<table><thead><tr id="thead"></tr></thead>' +
-                '<tbody id="tbody"></tbody></table>' +
-            '</div>' +
-            '<div class="status">' +
-                '<span class="si">Total Rows: <span id="sRows" class="sv">0</span></span>' +
-                '<span class="si">Selected Rows: <span id="sSel" class="sv">0</span></span>' +
-                '<span class="si">Validation: <span id="sIco" class="sico"></span><span id="sVal" class="sv">-</span></span>' +
-                '<span class="si">Error Rows: <span id="sErr" class="sv">0</span></span>' +
-            '</div>' +
+          '<div class="toolbar" id="toolbar"></div>' +
+          '<div class="table-area">' +
+            '<table>' +
+              '<thead><tr id="thead"></tr></thead>' +
+              '<tbody id="tbody"></tbody>' +
+            '</table>' +
+          '</div>' +
+          '<div class="status">' +
+            '<span class="si">Total Rows: <span id="sRows" class="sv">0</span></span>' +
+            '<span class="si">Selected Rows: <span id="sSel" class="sv">0</span></span>' +
+            '<span class="si">Validation: <span id="sIco" class="sico"></span><span id="sVal" class="sv">-</span></span>' +
+            '<span class="si">Error Rows: <span id="sErr" class="sv">0</span></span>' +
+          '</div>' +
         '</div>';
 
     /* =========================================================
@@ -32,35 +162,26 @@
 
         constructor() {
             super();
-
             this.attachShadow({ mode: "open" });
             this.shadowRoot.appendChild(tmpl.content.cloneNode(true));
 
-            this._tab = "create";
             this._lastEvent = "";
-            this._dd = null;
-            this._ddSearch = "";
+            this._dd        = null;   /* { row, field } */
+            this._ddSearch  = "";
 
-            this._data = {
-                create: {
-                    rows: [this._emptyRow()],
-                    opts: {},
-                    valid: null
-                },
-                modify: {
-                    rows: [],
-                    opts: {},
-                    valid: null
-                }
-            };
+            /* data store */
+            this._rows = [];
+            this._opts = {};   /* _opts[rowIndex][fieldName] = [...] */
+            this._valid = null;
 
-            this._buildTabBar();
-            this._render();
+            this._buildToolbar();
+            this._buildHead();
+            this._buildBody();
+            this._updateStatus();
         }
 
         connectedCallback() {
             var self = this;
-
             this._globalClose = function () {
                 if (self._dd) {
                     self._dd = null;
@@ -68,7 +189,6 @@
                     self._buildBody();
                 }
             };
-
             document.addEventListener("click", this._globalClose);
             this._fire("onReady", "ready");
         }
@@ -79,48 +199,14 @@
             }
         }
 
-        /* ── helpers ── */
+        /* =========================================================
+           INTERNAL HELPERS
+           ========================================================= */
 
         _emptyRow() {
-            var r = {
-                selected: false,
-                isModified: false
-            };
-
-            for (var i = 0; i < ALL_FIELDS.length; i++) {
-                r[ALL_FIELDS[i]] = "";
-            }
-
+            var r = { selected: false, isModified: false };
+            for (var i = 0; i < ALL_FIELDS.length; i++) { r[ALL_FIELDS[i]] = ""; }
             return r;
-        }
-
-        _d() {
-            return this._data[this._tab];
-        }
-
-        _cols() {
-            return this._tab === "create" ? TAB1_COLS : TAB2_COLS;
-        }
-
-        _mand() {
-            return this._tab === "create" ? TAB1_MANDATORY : TAB2_MANDATORY;
-        }
-
-        _pfx() {
-            return this._tab === "modify" ? "2" : "";
-        }
-
-        _esc(v) {
-            if (v == null) {
-                return "";
-            }
-
-            return String(v)
-                .replace(/&/g, "&amp;")
-                .replace(/</g, "&lt;")
-                .replace(/>/g, "&gt;")
-                .replace(/"/g, "&quot;")
-                .replace(/'/g, "&#039;");
         }
 
         _fire(name, value) {
@@ -128,118 +214,153 @@
             this.dispatchEvent(new Event(name));
         }
 
-        /* ── option helpers ── */
-
-        _oval(o) {
-            return typeof o === "object" ? o.value : o;
-        }
-
-        _otxt(o) {
-            return typeof o === "object"
-                ? (o.text !== undefined ? o.text : o.value)
-                : o;
-        }
+        _oval(o)  { return typeof o === "object" ? o.value : o; }
+        _otxt(o)  { return typeof o === "object" ? (o.text !== undefined ? o.text : o.value) : o; }
 
         _otext(opts, val) {
-            if (!val) {
-                return "";
-            }
-
+            if (!val) { return ""; }
             for (var i = 0; i < opts.length; i++) {
-                if (String(this._oval(opts[i])) === String(val)) {
-                    return this._otxt(opts[i]);
-                }
+                if (String(this._oval(opts[i])) === String(val)) { return this._otxt(opts[i]); }
             }
-
             return String(val);
         }
 
         _ofilt(opts, q) {
-            if (!q) {
-                return opts;
-            }
-
+            if (!q) { return opts; }
             var n = String(q).toLowerCase();
             var r = [];
-
             for (var i = 0; i < opts.length; i++) {
-                if (
-                    String(this._otxt(opts[i])).toLowerCase().indexOf(n) !== -1 ||
-                    String(this._oval(opts[i])).toLowerCase().indexOf(n) !== -1
-                ) {
+                if (String(this._otxt(opts[i])).toLowerCase().indexOf(n) !== -1 ||
+                    String(this._oval(opts[i])).toLowerCase().indexOf(n) !== -1) {
                     r.push(opts[i]);
                 }
             }
-
             return r;
         }
 
-        _getOpts(tab, row, field) {
-            var d = this._data[tab];
-
-            return (d.opts[row] && d.opts[row][field])
-                ? d.opts[row][field]
-                : [];
+        _getOpts(ri, field) {
+            return (this._opts[ri] && this._opts[ri][field]) ? this._opts[ri][field] : [];
         }
-
-        /* ── validation helpers ── */
 
         _hasData(row) {
             for (var i = 0; i < ALL_FIELDS.length; i++) {
                 var v = row[ALL_FIELDS[i]];
-
-                if (v !== "" && v !== null && v !== undefined) {
-                    return true;
-                }
+                if (v !== "" && v !== null && v !== undefined) { return true; }
             }
-
             return false;
         }
 
-        _missing(row, mand) {
+        _missing(row) {
             var m = [];
-
-            for (var i = 0; i < mand.length; i++) {
-                if (!row[mand[i]]) {
-                    m.push(mand[i]);
-                }
+            for (var i = 0; i < MANDATORY.length; i++) {
+                if (!row[MANDATORY[i]]) { m.push(MANDATORY[i]); }
             }
-
             return m;
         }
 
-        _errCount(d, mand) {
+        _errCount() {
             var n = 0;
-
-            for (var i = 0; i < d.rows.length; i++) {
-                if (!this._hasData(d.rows[i])) {
-                    continue;
-                }
-
-                if (this._missing(d.rows[i], mand).length > 0) {
-                    n++;
-                }
+            for (var i = 0; i < this._rows.length; i++) {
+                if (!this._hasData(this._rows[i])) { continue; }
+                if (this._missing(this._rows[i]).length > 0) { n++; }
             }
-
             return n;
         }
-                d.valid === false && this._hasData(row)
-            ) ? this._missing(row, mand) : [];
+
+        _selCount() {
+            var n = 0;
+            for (var i = 0; i < this._rows.length; i++) {
+                if (this._rows[i].selected) { n++; }
+            }
+            return n;
+        }
+
+        /* =========================================================
+           TOOLBAR
+           ========================================================= */
+
+        _buildToolbar() {
+            var self = this;
+            var tb = this.shadowRoot.getElementById("toolbar");
+
+            tb.innerHTML =
+                '<button id="btnDel" class="del" style="display:none">' + ICON_DEL  + ' Delete Selected</button>' +
+                '<button id="btnVal">'                                   + ICON_CHECK + ' Validate</button>'        +
+                '<button id="btnSave" class="primary">'                  + ICON_SAVE  + ' Save Changes</button>'   +
+                '<button id="btnClr">'                                   + ICON_CLEAR + ' Clear</button>'          +
+                '<button id="btnLoad">'                                  + ICON_LOAD  + ' Load Data</button>';
+
+            this.shadowRoot.getElementById("btnDel").onclick  = function () { self._deleteRows(); };
+            this.shadowRoot.getElementById("btnVal").onclick  = function () { self._validate(); };
+            this.shadowRoot.getElementById("btnSave").onclick = function () { self._fire("onDataChange", "saveChanges|" + self._rows.length); };
+            this.shadowRoot.getElementById("btnClr").onclick  = function () { self._clearRows(); };
+            this.shadowRoot.getElementById("btnLoad").onclick = function () { self._fire("onDataChange", "loadData"); };
+        }
+
+        /* =========================================================
+           TABLE HEAD
+           ========================================================= */
+
+        _buildHead() {
+            var self = this;
+            var tr = this.shadowRoot.getElementById("thead");
+            tr.innerHTML = "";
+
+            /* select-all checkbox */
+            var thChk = document.createElement("th");
+            thChk.className = "chk-cell";
+            var chkAll = document.createElement("input");
+            chkAll.type = "checkbox";
+            chkAll.className = "chk";
+            chkAll.id = "chkAll";
+            chkAll.onchange = function (e) {
+                var chk = e.target.checked;
+                for (var i = 0; i < self._rows.length; i++) { self._rows[i].selected = chk; }
+                self._buildBody();
+                self._updateStatus();
+                self._fire("onDataChange", "selectAll|" + chk);
+            };
+            thChk.appendChild(chkAll);
+            tr.appendChild(thChk);
+
+            /* column headers */
+            for (var i = 0; i < COLS.length; i++) {
+                var th = document.createElement("th");
+                th.style.width = COLS[i].width + "px";
+                th.textContent = COLS[i].label;
+                tr.appendChild(th);
+            }
+        }
+
+        /* =========================================================
+           TABLE BODY  (only method called after data changes)
+           ========================================================= */
+
+        _buildBody() {
+            var self   = this;
+            var tbody  = this.shadowRoot.getElementById("tbody");
+            tbody.innerHTML = "";
+
+            for (var ri = 0; ri < this._rows.length; ri++) {
+                tbody.appendChild(this._buildRow(ri));
+            }
+
+            this._updateDelBtn();
+            this._updateChkAll();
+        }
+
+        _buildRow(ri) {
+            var self = this;
+            var row  = this._rows[ri];
+            var miss = (this._valid === false && this._hasData(row)) ? this._missing(row) : [];
 
             var tr = document.createElement("tr");
+            if (row.selected) { tr.classList.add("sel"); }
+            if (miss.length)  { tr.classList.add("err"); }
 
-            if (row.selected) {
-                tr.classList.add("sel");
-            }
-
-            if (miss.length) {
-                tr.classList.add("err");
-            }
-
-            /* checkbox cell */
+            /* ── checkbox ── */
             var chkTd = document.createElement("td");
             chkTd.className = "chk-cell";
-
             var chk = document.createElement("input");
             chk.type = "checkbox";
             chk.className = "chk";
@@ -247,51 +368,34 @@
 
             chk.onchange = (function (rowIdx, trEl) {
                 return function (e) {
-                    var chkd = e.target.checked;
-
-                    d.rows[rowIdx].selected = chkd;
-
-                    if (chkd) {
-                        trEl.classList.add("sel");
-                    } else {
-                        trEl.classList.remove("sel");
-                    }
-
+                    self._rows[rowIdx].selected = e.target.checked;
+                    if (e.target.checked) { trEl.classList.add("sel"); }
+                    else                  { trEl.classList.remove("sel"); }
                     self._updateDelBtn();
                     self._updateChkAll();
                     self._updateStatus();
-
-                    self._fire(
-                        "onDataChange",
-                        "selectRow" +
-                        (tab === "modify" ? "2" : "") +
-                        "|" + rowIdx + "|" + chkd
-                    );
+                    self._fire("onDataChange", "selectRow|" + rowIdx + "|" + e.target.checked);
                 };
             }(ri, tr));
 
             chkTd.appendChild(chk);
             tr.appendChild(chkTd);
 
-            /* data cells */
-            for (var ci = 0; ci < cols.length; ci++) {
-                var col = cols[ci];
+            /* ── data cells ── */
+            for (var ci = 0; ci < COLS.length; ci++) {
+                var col    = COLS[ci];
                 var hasErr = (miss.indexOf(col.field) !== -1);
-                var td = document.createElement("td");
+                var td     = document.createElement("td");
 
                 if (col.type === "select") {
-                    td.appendChild(
-                        this._buildCombo(tab, d, ri, col, hasErr)
-                    );
+                    td.appendChild(this._buildCombo(ri, col, hasErr));
                 } else {
-                    td.appendChild(
-                        this._buildInput(tab, d, ri, col, hasErr)
-                    );
+                    td.appendChild(this._buildInput(ri, col, hasErr));
                 }
 
                 if (hasErr) {
                     var ep = document.createElement("div");
-                    ep.className = "field-error";
+                    ep.className   = "field-error";
                     ep.textContent = col.label + " is required";
                     td.appendChild(ep);
                 }
@@ -302,215 +406,139 @@
             return tr;
         }
 
-        /* ── input cell ── */
+        /* ── plain input ── */
 
-        _buildInput(tab, d, ri, col, hasErr) {
+        _buildInput(ri, col, hasErr) {
             var self = this;
-            var inp = document.createElement("input");
+            var inp  = document.createElement("input");
+            inp.className = "cell" + (col.readonly ? " ro" : "") + (hasErr ? " ce" : "");
+            inp.type      = col.type || "text";
+            inp.value     = this._rows[ri][col.field] || "";
+            if (col.readonly) { inp.readOnly = true; return inp; }
 
-            inp.className =
-                "cell" +
-                (col.readonly ? " ro" : "") +
-                (hasErr ? " ce" : "");
-
-            inp.type = col.type || "text";
-            inp.value = d.rows[ri][col.field] || "";
-
-            if (col.readonly) {
-                inp.readOnly = true;
-            }
-
-            if (!col.readonly) {
-                inp.onchange = function () {
-                    d.rows[ri][col.field] = inp.value;
-                    d.rows[ri].isModified = true;
-                    d.valid = null;
-
-                    self._updateStatus();
-
-                    self._fire(
-                        "onDataChange",
-                        "fieldChange" +
-                        (tab === "modify" ? "2" : "") +
-                        "|" + ri +
-                        "|" + col.field +
-                        "|" + inp.value
-                    );
-                };
-            }
-
+            inp.onchange = function () {
+                self._rows[ri][col.field]   = inp.value;
+                self._rows[ri].isModified   = true;
+                self._valid                 = null;
+                self._updateStatus();
+                self._fire("onDataChange", "fieldChange|" + ri + "|" + col.field + "|" + inp.value);
+            };
             return inp;
         }
 
-        /* ── searchable dropdown cell ── */
+        /* ── searchable dropdown ── */
 
-        _buildCombo(tab, d, ri, col, hasErr) {
-            var self = this;
-            var field = col.field;
-            var opts = this._getOpts(tab, ri, field);
-            var curVal = d.rows[ri][field] || "";
-            var curTxt = this._otext(opts, curVal) || "";
+        _buildCombo(ri, col, hasErr) {
+            var self    = this;
+            var field   = col.field;
+            var opts    = this._getOpts(ri, field);
+            var curVal  = this._rows[ri][field] || "";
+            var curTxt  = this._otext(opts, curVal) || "";
+            var isOpen  = !!(this._dd && this._dd.row === ri && this._dd.field === field);
 
-            var isOpen = !!(
-                this._dd &&
-                this._dd.tab === tab &&
-                this._dd.row === ri &&
-                this._dd.field === field
-            );
-
+            /* wrapper div */
             var wrap = document.createElement("div");
             wrap.className = "cw";
-            wrap.setAttribute(
-                "data-ct",
-                tab + "|" + ri + "|" + field
-            );
 
-            /* dropdown toggle */
-            var btn = document.createElement("button");
+            /* toggle button */
+            var btn  = document.createElement("button");
             btn.type = "button";
-            btn.className =
-                "ct" +
-                (isOpen ? " open" : "") +
-                (hasErr ? " ce" : "");
+            btn.className = "ct" + (isOpen ? " open" : "") + (hasErr ? " ce" : "");
 
-            var span = document.createElement("span");
-            span.className = "ct-text" + (curTxt ? "" : " ph");
-            span.textContent = curTxt || "Select";
+            var lbl = document.createElement("span");
+            lbl.className  = "ct-text" + (curTxt ? "" : " ph");
+            lbl.textContent = curTxt || "Select";
 
             var chev = document.createElement("span");
             chev.className = "ct-chev";
+            chev.innerHTML = '<svg width="12" height="12" viewBox="0 0 20 20" fill="none"><path d="M5 7.5l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
 
-            chev.innerHTML =
-                '<svg width="12" height="12" viewBox="0 0 20 20" fill="none">' +
-                '<path d="M5 7.5l5 5 5-5" stroke="currentColor" ' +
-                'stroke-width="1.8" stroke-linecap="round" ' +
-                'stroke-linejoin="round"/>' +
-                '</svg>';
-
-            btn.appendChild(span);
+            btn.appendChild(lbl);
             btn.appendChild(chev);
 
             btn.onclick = function (e) {
                 e.stopPropagation();
-
                 if (isOpen) {
                     self._dd = null;
                 } else {
-                    self._dd = {
-                        tab: tab,
-                        row: ri,
-                        field: field
-                    };
-
+                    self._dd = { row: ri, field: field };
                     self._ddSearch = "";
                 }
-
                 self._buildBody();
             };
 
             wrap.appendChild(btn);
 
-            /* dropdown panel */
+            /* panel (only when open) */
             if (isOpen) {
                 var panel = document.createElement("div");
                 panel.className = "cp";
+                panel.onclick = function (e) { e.stopPropagation(); };
 
-                panel.onclick = function (e) {
-                    e.stopPropagation();
-                };
-
-                /* search row */
+                /* search bar */
                 var sRow = document.createElement("div");
                 sRow.className = "cs";
 
                 var sIco = document.createElement("span");
                 sIco.className = "cs-icon";
-
-                sIco.innerHTML =
-                    '<svg width="14" height="14" viewBox="0 0 20 20" fill="none">' +
-                    '<circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.6"/>' +
-                    '<path d="M13 13l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>' +
-                    '</svg>';
+                sIco.innerHTML = '<svg width="14" height="14" viewBox="0 0 20 20" fill="none"><circle cx="8.5" cy="8.5" r="5.5" stroke="currentColor" stroke-width="1.6"/><path d="M13 13l4 4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>';
 
                 var sInp = document.createElement("input");
-                sInp.type = "text";
-                sInp.className = "cs-inp";
+                sInp.type        = "text";
+                sInp.className   = "cs-inp";
                 sInp.placeholder = "Search";
-                sInp.value = this._ddSearch;
+                sInp.value       = this._ddSearch;
                 sInp.autocomplete = "off";
 
                 sRow.appendChild(sIco);
                 sRow.appendChild(sInp);
 
-                /* clear search button */
                 if (this._ddSearch) {
                     var sClr = document.createElement("button");
-
-                    sClr.type = "button";
+                    sClr.type      = "button";
                     sClr.className = "cs-clr";
                     sClr.innerHTML = "&times;";
-
-                    sClr.onclick = function (e) {
+                    sClr.onclick   = function (e) {
                         e.stopPropagation();
                         self._ddSearch = "";
                         self._buildBody();
                     };
-
                     sRow.appendChild(sClr);
                 }
 
                 panel.appendChild(sRow);
 
-                /* options list */
-                var list = document.createElement("div");
+                /* options */
+                var list     = document.createElement("div");
                 list.className = "co-list";
-
                 var filtered = this._ofilt(opts, this._ddSearch);
 
                 if (!filtered.length) {
                     var emp = document.createElement("div");
-                    emp.className = "co-empty";
+                    emp.className   = "co-empty";
                     emp.textContent = "No matches";
                     list.appendChild(emp);
-
                 } else {
                     for (var oi = 0; oi < filtered.length; oi++) {
-                        var ov = this._oval(filtered[oi]);
-                        var ot = this._otxt(filtered[oi]);
-
+                        var ov   = String(this._oval(filtered[oi]));
+                        var ot   = this._otxt(filtered[oi]);
                         var item = document.createElement("div");
-
-                        item.className =
-                            "co-item" +
-                            (String(ov) === String(curVal) ? " picked" : "");
-
+                        item.className  = "co-item" + (ov === String(curVal) ? " picked" : "");
                         item.textContent = ot;
-                        item.setAttribute("data-v", ov);
 
                         item.onclick = (function (optVal) {
                             return function (e) {
                                 e.stopPropagation();
-
-                                d.rows[ri][field] = optVal;
-                                d.rows[ri].isModified = true;
-                                d.valid = null;
-
-                                self._dd = null;
-                                self._ddSearch = "";
-
+                                self._rows[ri][field]       = optVal;
+                                self._rows[ri].isModified   = true;
+                                self._valid                 = null;
+                                self._dd                    = null;
+                                self._ddSearch              = "";
                                 self._buildBody();
                                 self._updateStatus();
-
-                                self._fire(
-                                    "onDataChange",
-                                    "fieldChange" +
-                                    (tab === "modify" ? "2" : "") +
-                                    "|" + ri +
-                                    "|" + field +
-                                    "|" + optVal
-                                );
+                                self._fire("onDataChange", "fieldChange|" + ri + "|" + field + "|" + optVal);
                             };
-                        }(String(ov)));
+                        }(ov));
 
                         list.appendChild(item);
                     }
@@ -519,10 +547,8 @@
                 panel.appendChild(list);
                 wrap.appendChild(panel);
 
-                /* focus and live search */
-                setTimeout(function () {
-                    sInp.focus();
-                }, 0);
+                /* auto-focus search */
+                setTimeout(function () { sInp.focus(); }, 0);
 
                 sInp.oninput = function () {
                     self._ddSearch = sInp.value;
@@ -531,7 +557,7 @@
 
                 sInp.onkeydown = function (e) {
                     if (e.key === "Escape") {
-                        self._dd = null;
+                        self._dd       = null;
                         self._ddSearch = "";
                         self._buildBody();
                     }
@@ -541,53 +567,80 @@
             return wrap;
         }
 
-        /* ── status bar ── */
+        /* =========================================================
+           ROW OPERATIONS
+           ========================================================= */
+
+        _deleteRows() {
+            var kept = [], del = 0;
+            for (var i = 0; i < this._rows.length; i++) {
+                if (this._rows[i].selected) { del++; } else { kept.push(this._rows[i]); }
+            }
+            if (!del) { return; }
+            this._rows = kept;
+            this._valid = null;
+            this._buildBody();
+            this._updateStatus();
+            this._fire("onDataChange", "deleteRow|" + del);
+        }
+
+        _clearRows() {
+            var n = 0;
+            for (var i = 0; i < this._rows.length; i++) {
+                if (!this._rows[i].selected) { continue; }
+                /* only clear the editable fields — keep assetId */
+                this._rows[i].assetClass       = "";
+                this._rows[i].capitalizedMonth = "";
+                this._rows[i].isModified       = true;
+                this._rows[i].selected         = false;
+                n++;
+            }
+            if (!n) { return; }
+            this._valid = null;
+            this._buildBody();
+            this._updateStatus();
+            this._fire("onDataChange", "clear|" + n);
+        }
+
+        _validate() {
+            var errs = 0;
+            for (var i = 0; i < this._rows.length; i++) {
+                if (!this._hasData(this._rows[i])) { continue; }
+                if (this._missing(this._rows[i]).length > 0) { errs++; }
+            }
+            this._valid = (errs === 0);
+            this._buildBody();
+            this._updateStatus();
+            if (errs === 0) {
+                this._fire("onValidate", "VALID|0");
+            } else {
+                this._fire("onValidate", "INVALID|" + errs);
+            }
+        }
+
+        /* =========================================================
+           STATUS / COUNTS
+           ========================================================= */
 
         _updateStatus() {
-            var d = this._d();
-            var mand = this._mand();
-            var sel = 0;
-
-            for (var i = 0; i < d.rows.length; i++) {
-                if (d.rows[i].selected) {
-                    sel++;
-                }
-            }
-
-            this.shadowRoot.getElementById("sRows").textContent =
-                d.rows.length;
-
-            this.shadowRoot.getElementById("sSel").textContent = sel;
+            var sel  = this._selCount();
+            this.shadowRoot.getElementById("sRows").textContent = this._rows.length;
+            this.shadowRoot.getElementById("sSel").textContent  = sel;
 
             var valEl = this.shadowRoot.getElementById("sVal");
-            var ico = this.shadowRoot.getElementById("sIco");
+            var ico   = this.shadowRoot.getElementById("sIco");
             var errEl = this.shadowRoot.getElementById("sErr");
 
             valEl.className = "sv";
 
-            if (d.valid === true) {
-                valEl.textContent = "true";
-                valEl.classList.add("ok");
+            if (this._valid === true) {
+                valEl.textContent = "true";  valEl.classList.add("ok");
                 errEl.textContent = "0";
-
-                ico.innerHTML =
-                    '<svg width="12" height="12" viewBox="0 0 20 20" fill="none">' +
-                    '<circle cx="10" cy="10" r="9" stroke="#107e3e" stroke-width="1.6"/>' +
-                    '<path d="M6 10.3l2.6 2.6L14 7.5" stroke="#107e3e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>' +
-                    '</svg>';
-
-            } else if (d.valid === false) {
-                valEl.textContent = "false";
-                valEl.classList.add("bad");
-                errEl.textContent = String(this._errCount(d, mand));
-
-                ico.innerHTML =
-                    '<svg width="12" height="12" viewBox="0 0 20 20" fill="none">' +
-                    '<circle cx="10" cy="10" r="9" stroke="#bb0000" stroke-width="1.6"/>' +
-                    '<path d="M10 6v5" stroke="#bb0000" stroke-width="1.8" stroke-linecap="round"/>' +
-                    '<circle cx="10" cy="13.6" r="1" fill="#bb0000"/>' +
-                    '</svg>';
-
+                ico.innerHTML = '<svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#107e3e" stroke-width="1.6"/><path d="M6 10.3l2.6 2.6L14 7.5" stroke="#107e3e" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            } else if (this._valid === false) {
+                valEl.textContent = "false"; valEl.classList.add("bad");
+                errEl.textContent = String(this._errCount());
+                ico.innerHTML = '<svg width="12" height="12" viewBox="0 0 20 20" fill="none"><circle cx="10" cy="10" r="9" stroke="#bb0000" stroke-width="1.6"/><path d="M10 6v5" stroke="#bb0000" stroke-width="1.8" stroke-linecap="round"/><circle cx="10" cy="13.6" r="1" fill="#bb0000"/></svg>';
             } else {
                 valEl.textContent = "-";
                 errEl.textContent = "0";
@@ -596,184 +649,63 @@
         }
 
         _updateDelBtn() {
-            var d = this._d();
-            var sel = 0;
-
-            for (var i = 0; i < d.rows.length; i++) {
-                if (d.rows[i].selected) {
-                    sel++;
-                }
-            }
-
-            var id = this._tab === "create" ? "btnDel" : "btnDel2";
-            var el = this.shadowRoot.getElementById(id);
-
-            if (el) {
-                el.style.display = sel > 0 ? "inline-flex" : "none";
-            }
+            var el = this.shadowRoot.getElementById("btnDel");
+            if (el) { el.style.display = this._selCount() > 0 ? "inline-flex" : "none"; }
         }
 
         _updateChkAll() {
-            var d = this._d();
-            var sel = 0;
-
-            for (var i = 0; i < d.rows.length; i++) {
-                if (d.rows[i].selected) {
-                    sel++;
-                }
-            }
-
             var ca = this.shadowRoot.getElementById("chkAll");
-
-            if (!ca) {
-                return;
-            }
-
-            ca.checked = (d.rows.length > 0 && sel === d.rows.length);
-            ca.indeterminate = (sel > 0 && sel < d.rows.length);
+            if (!ca) { return; }
+            var sel = this._selCount();
+            ca.checked       = (this._rows.length > 0 && sel === this._rows.length);
+            ca.indeterminate = (sel > 0 && sel < this._rows.length);
         }
+
         /* =========================================================
            PUBLIC API
            ========================================================= */
 
-        getLastEvent() {
-            return this._lastEvent;
-        }
+        getLastEvent() { return this._lastEvent; }
 
-        getActiveTab() {
-            return this._tab;
-        }
+        /* Get all rows as JSON string */
+        getData() { return JSON.stringify(this._rows); }
 
-        setActiveTab(t) {
-            if (t !== "create" && t !== "modify") {
-                return;
-            }
-
-            if (t === this._tab) {
-                return;
-            }
-
-            this._tab = t;
-            this._dd = null;
-            this._ddSearch = "";
-
-            var all = this.shadowRoot.querySelectorAll(".tab-btn");
-
-            for (var i = 0; i < all.length; i++) {
-                all[i].classList.toggle(
-                    "active",
-                    all[i].getAttribute("data-t") === t
-                );
-            }
-
-            this._render();
-        }
-
-        /* ── Tab 1 API ── */
-
-        getData() {
-            return JSON.stringify(this._data.create.rows);
-        }
-
-        setData(v) {
-            this._loadData("create", v, true);
-        }
-
-        setCellValue(r, f, v) {
-            this._setCell("create", r, f, v);
-        }
-
-        setRowOptions(r, f, o) {
-            this._setOpts("create", r, f, o);
-        }
-
-        /* ── Tab 2 API ── */
-
-        getData2() {
-            return JSON.stringify(this._data.modify.rows);
-        }
-
-        setData2(v) {
-            this._loadData("modify", v, false);
-        }
-
-        setCellValue2(r, f, v) {
-            this._setCell("modify", r, f, v);
-        }
-
-        setRowOptions2(r, f, o) {
-            this._setOpts("modify", r, f, o);
-        }
-
-        /* ── shared internals ── */
-
-        _loadData(tab, raw, forceOne) {
-            var d = this._data[tab];
-
+        /* Replace all rows (called from script after loadData fires) */
+        setData(raw) {
             try {
                 var p = typeof raw === "string" ? JSON.parse(raw) : raw;
-                d.rows = Array.isArray(p) ? p : [];
-            } catch (e) {
-                d.rows = [];
-            }
-
-            if (forceOne && !d.rows.length) {
-                d.rows.push(this._emptyRow());
-            }
-
-            d.valid = null;
-
-            if (this._dd && this._dd.tab === tab) {
-                this._dd = null;
-                this._ddSearch = "";
-            }
-
-            if (this._tab === tab) {
-                this._render();
-            }
+                this._rows = Array.isArray(p) ? p : [];
+            } catch (e) { this._rows = []; }
+            this._valid = null;
+            this._dd = null; this._ddSearch = "";
+            this._buildBody();
+            this._updateStatus();
         }
 
-        _setCell(tab, ri, field, val) {
-            var d = this._data[tab];
-
-            if (!d.rows[ri]) {
-                return;
-            }
-
-            d.rows[ri][field] = val;
-            d.rows[ri].isModified = true;
-            d.valid = null;
-
-            if (this._tab === tab) {
-                this._render();
-            }
+        /* Set one cell value */
+        setCellValue(ri, field, val) {
+            if (!this._rows[ri]) { return; }
+            this._rows[ri][field]     = val;
+            this._rows[ri].isModified = true;
+            this._valid = null;
+            this._buildBody();
+            this._updateStatus();
         }
 
-        _setOpts(tab, ri, field, raw) {
-            var d = this._data[tab];
-
-            if (!d.opts[ri]) {
-                d.opts[ri] = {};
-            }
-
+        /* Set dropdown options for one cell */
+        setRowOptions(ri, field, raw) {
+            if (!this._opts[ri]) { this._opts[ri] = {}; }
             try {
-                d.opts[ri][field] =
-                    typeof raw === "string" ? JSON.parse(raw) : raw;
+                this._opts[ri][field] = typeof raw === "string" ? JSON.parse(raw) : raw;
             } catch (e) {
-                d.opts[ri][field] = [];
+                this._opts[ri][field] = [];
             }
-
-            if (this._tab === tab) {
-                this._buildBody();
-            }
+            this._buildBody();
         }
     }
 
     if (!customElements.get("com-madhav-cwipassetentry")) {
-        customElements.define(
-            "com-madhav-cwipassetentry",
-            CWIPAssetEntry
-        );
+        customElements.define("com-madhav-cwipassetentry", CWIPAssetEntry);
     }
 
 })();
