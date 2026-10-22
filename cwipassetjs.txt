@@ -319,7 +319,6 @@ template.innerHTML =
         '<span class="visible">Visible: <strong id="visibleCount">0</strong></span>' +
         '<div class="actions">' +
           '<button id="load">Load Data</button>' +
-          '<button id="validate">Validate</button>' +
           '<button id="save" class="primary">Save Changes</button>' +
           '<button id="clear">Clear</button>' +
         '</div>' +
@@ -366,9 +365,9 @@ class CWIPAssetEntry extends HTMLElement {
 
         [
             "search","visibleCount",
-            "load","validate","save","clear",
+            "load","save","clear",
             "range","prev","page","next",
-            "head","body","total","selected","valid","errors"
+            "head","body","total","selected"
         ].forEach(function(id) {
             self[id] = self.shadowRoot.getElementById(id);
         });
@@ -406,10 +405,6 @@ class CWIPAssetEntry extends HTMLElement {
 
         this.load.onclick = function() {
             self._fire("onDataChange","loadData");
-        };
-
-        this.validate.onclick = function() {
-            self._validate();
         };
 
         this.save.onclick = function() {
@@ -647,7 +642,6 @@ class CWIPAssetEntry extends HTMLElement {
     _pageCount() {
         return Math.max(1,Math.ceil(this._filtered().length / this._pageSize));
     }
-
     _render() {
         var self = this;
         var filtered = this._filtered();
@@ -899,97 +893,6 @@ class CWIPAssetEntry extends HTMLElement {
 
         return wrap;
     }
-
-   
-
-validate() {
-    var errors = [];
-    var selectedCount = 0;
-
-    for (var i = 0; i < this._rows.length; i++) {
-
-        var row = this._rows[i];
-
-        // Ignore rows that have not been selected.
-        if (row.selected !== true) {
-            continue;
-        }
-
-        selectedCount++;
-
-        var rowIndex = i + 1;
-
-        // Asset ID is required.
-        if (!row.assetId || String(row.assetId).trim() === "") {
-            errors.push({
-                rowIndex: rowIndex,
-                field: "assetId",
-                message: "Asset ID is mandatory"
-            });
-        }
-
-        // Asset Class is required.
-        if (!row.assetClass ||
-            String(row.assetClass).trim() === "") {
-            errors.push({
-                rowIndex: rowIndex,
-                field: "assetClass",
-                message: "Asset Class is mandatory"
-            });
-        }
-
-        // Capitalized Month is required.
-        if (!row.capitalizedMonth ||
-            String(row.capitalizedMonth).trim() === "") {
-            errors.push({
-                rowIndex: rowIndex,
-                field: "capitalizedMonth",
-                message: "Capitalized Month is mandatory"
-            });
-        } else if (
-            !/^\d{4}-(0[1-9]|1[0-2])$/.test(
-                String(row.capitalizedMonth).trim()
-            )
-        ) {
-            errors.push({
-                rowIndex: rowIndex,
-                field: "capitalizedMonth",
-                message: "Capitalized Month must be in YYYY-MM format"
-            });
-        }
-    }
-
-    // Require at least one selected row.
-    if (selectedCount === 0) {
-        errors.push({
-            rowIndex: 1,
-            field: "selected",
-            message: "Please select at least one asset row to validate"
-        });
-    }
-
-    this._validationErrors = errors;
-    this._validationResult = errors.length === 0 ? "true" : "false";
-
-    this._lastEvent = JSON.stringify({
-        type: "validate",
-        validationResult: this._validationResult,
-        errorCount: errors.length
-    });
-
-    this._widgetStatus = errors.length === 0 ? "VALID" : "ERROR";
-
-    this._syncRows();
-    this._refreshTable();
-
-    this._fireSimpleEvent("onValidate", {
-        validationResult: this._validationResult,
-        validationErrors: errors
-    });
-
-    return this._validationResult;
-}
-
     _clearSelectedOrAll() {
         var self = this;
 
@@ -1021,10 +924,6 @@ validate() {
     _updateStatus() {
         this.total.textContent = this._rows.length;
         this.selected.textContent = this._selected.size;
-        this.valid.textContent =
-            this._valid === null ? "-" :
-            (this._valid ? "Valid" : "Invalid");
-        this.errors.textContent = this._errors.length;
     }
 
     _esc(value) {
