@@ -1,78 +1,121 @@
+
 {
-    "id": "com.madhav.cwipassetentry",
-    "version": "2.0.0",
-    "name": "CWIP Asset Entry",
-    "description": "CWIP asset capitalisation data entry widget",
-    "newInstancePrefix": "CWIPAssetEntry",
-    "vendor": "Madhav Pandey",
-    "eula": "",
-    "license": "",
-
-    "webcomponents": [
-        {
-            "kind": "main",
-            "tag": "com-madhav-cwipassetentry",
-            "url": "https://madhavpandey1478-sys.github.io/CWIPASSET/cwipassetjs.txt",
-            "integrity": "",
-            "ignoreIntegrity": true
-        }
-    ],
-
-    "properties": {
-        "width":  { "type": "integer", "default": 800  },
-        "height": { "type": "integer", "default": 500  }
-    },
-
-    "methods": {
-
-        "getLastEvent": {
-            "returnType": "string",
-            "description": "Returns the last event payload. Split by '|' to parse."
-        },
-
-        "getData": {
-            "returnType": "string",
-            "description": "Returns all rows as a JSON string."
-        },
-
-        "setData": {
-            "description": "Replaces all rows. Call this inside onDataChange after 'loadData' fires.",
-            "parameters": [
-                { "name": "data", "type": "string", "description": "JSON array of row objects." }
-            ]
-        },
-
-        "setCellValue": {
-            "description": "Sets a single cell value and re-renders.",
-            "parameters": [
-                { "name": "rowIndex",  "type": "integer", "description": "Zero-based row index." },
-                { "name": "fieldName", "type": "string",  "description": "assetId | assetClass | capitalizedMonth" },
-                { "name": "value",     "type": "string",  "description": "Value to set." }
-            ]
-        },
-
-        "setRowOptions": {
-            "description": "Sets searchable dropdown options for one cell.",
-            "parameters": [
-                { "name": "rowIndex",  "type": "integer", "description": "Zero-based row index." },
-                { "name": "fieldName", "type": "string",  "description": "assetClass | capitalizedMonth" },
-                { "name": "options",   "type": "string",  "description": "JSON array: [{value,text},...] or ['val',...]" }
-            ]
-        }
-    },
-
-    "events": {
-
-        "onReady": {
-            "description": "Fires once when the widget is mounted. Use to load initial data."
-        },
-
-        "onDataChange": {
-            "description": "Fires on every user interaction. Call getLastEvent() and split by '|'. Payloads: loadData | saveChanges|n | fieldChange|row|field|value | selectRow|row|true/false | selectAll|true/false | deleteRow|n | clear|n."
-        },
-
-        "onValidate": {
-            "description": "Fires when Validate is clicked. getLastEvent() returns VALID|0 or INVALID|n."
-        }
+  "id": "com.madhav.cwipassetentry",
+  "version": "2.1.0",
+  "name": "CWIP Asset Entry",
+  "description": "CWIP asset capitalisation data entry widget",
+  "newInstancePrefix": "CWIPAssetEntry",
+  "vendor": "Madhav Pandey",
+  "eula": "",
+  "license": "",
+  "webcomponents": [
+    {
+      "kind": "main",
+      "tag": "com-madhav-cwipassetentry",
+      "url": "https://madhavpandey1478-sys.github.io/CWIPASSET/cwipassetjs.txt",
+      "integrity": "",
+      "ignoreIntegrity": true
     }
+  ],
+  "properties": {
+    "width": {
+      "type": "integer",
+      "default": 800
+    },
+    "height": {
+      "type": "integer",
+      "default": 500
+    }
+  },
+  "methods": {
+    "getLastEvent": {
+      "returnType": "string",
+      "description": "Returns the last event payload. Split by '|' to parse."
+    },
+    "getData": {
+      "returnType": "string",
+      "description": "Returns all rows as a JSON string."
+    },
+    "getSelectedData": {
+      "returnType": "string",
+      "description": "Returns selected rows as a JSON string."
+    },
+    "setData": {
+      "description": "Replaces all rows. Call after retrieving data from the SAC model.",
+      "parameters": [
+        {
+          "name": "data",
+          "type": "string",
+          "description": "JSON array of row objects containing assetId, assetClass, and capitalizedMonth."
+        }
+      ]
+    },
+    "setCellValue": {
+      "description": "Sets a single cell value and re-renders.",
+      "parameters": [
+        {
+          "name": "rowIndex",
+          "type": "integer",
+          "description": "Zero-based row index."
+        },
+        {
+          "name": "fieldName",
+          "type": "string",
+          "description": "assetId, assetClass, or capitalizedMonth."
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "description": "Value to set. Capitalized Month should use YYYY-MM."
+        }
+      ]
+    },
+    "setRowOptions": {
+      "description": "Sets Asset Class dropdown options.",
+      "parameters": [
+        {
+          "name": "rowIndex",
+          "type": "integer",
+          "description": "Zero-based row index."
+        },
+        {
+          "name": "fieldName",
+          "type": "string",
+          "description": "Use assetClass."
+        },
+        {
+          "name": "options",
+          "type": "string",
+          "description": "JSON array of dropdown values or objects containing value and text."
+        }
+      ]
+    },
+    "setOptions": {
+      "description": "Sets the available Asset Class dropdown options.",
+      "parameters": [
+        {
+          "name": "options",
+          "type": "string",
+          "description": "JSON array, for example ['Machinery','Buildings'] or [{\"value\":\"MACH\",\"text\":\"Machinery\"}]."
+        }
+      ]
+    }
+  },
+  "events": {
+    "onReady": {
+      "description": "Fires when the widget is mounted. Use it to initialize data and dropdown options."
+    },
+    "onDataChange": {
+      "description": "Fires when Load Data, Save Changes, row selection, or Clear is used. Read getLastEvent() to identify the action."
+    },
+    "onFieldChange": {
+      "description": "Fires when Asset Class or Capitalized Month is changed."
+    },
+    "onValidate": {
+      "description": "Fires when Validate is clicked. getLastEvent() returns VALID|0 or INVALID|n."
+    },
+    "onClear": {
+      "description": "Fires when editable values are cleared."
+    }
+  }
 }
