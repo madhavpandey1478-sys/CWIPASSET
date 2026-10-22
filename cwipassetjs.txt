@@ -1,387 +1,100 @@
+
 (function () {
 "use strict";
 
-/* =========================================================
-   CWIP CAPEX ASSET ENTRY
-   Fields: Asset ID, Asset Class, Capitalized Month
-   ========================================================= */
-
 var FIELDS = [
-    { field: "assetId", label: "Asset ID", type: "text", width: 200, readonly: true },
-    { field: "assetClass", label: "Asset Class", type: "select", width: 300 },
-    { field: "capitalizedMonth", label: "Capitalized Month", type: "month", width: 240 }
+    {field:"assetId", label:"Asset ID", type:"text", width:200, readonly:true},
+    {field:"assetClass", label:"Asset Class", type:"select", width:300},
+    {field:"capitalizedMonth", label:"Capitalized Month", type:"month", width:240}
 ];
 
-var ALL_FIELDS = FIELDS.map(function (f) {
-    return f.field;
-});
+var ALL_FIELDS = FIELDS.map(function (f) { return f.field; });
 
 var CSS = `
-:host {
-    display:block;
-    width:100%;
-    height:100%;
-    min-height:250px;
-    font-family:"72","72full",Arial,sans-serif;
-    color:#243746;
-    font-size:12px;
-}
-* { box-sizing:border-box; }
-
-.wrap {
-    height:100%;
-    min-height:250px;
-    display:flex;
-    flex-direction:column;
-    background:#fff;
-    border:1px solid #d9e0e7;
-    border-radius:8px;
-    overflow:hidden;
-}
-
-.top {
-    display:flex;
-    align-items:center;
-    gap:10px;
-    flex-wrap:wrap;
-    padding:10px;
-    background:#f8fafc;
-    border-bottom:1px solid #dfe6ee;
-    min-height:56px;
-}
-
-.search {
-    height:36px;
-    width:265px;
-    max-width:100%;
-    padding:0 12px;
-    border:1px solid #cfd8e3;
-    border-radius:7px;
-    background:#fff;
-    font:inherit;
-    outline:none;
-}
-
-.search:focus,.company:focus {
-    border-color:#0a6ed1;
-    box-shadow:0 0 0 2px #0a6ed11c;
-}
-
-.visible {
-    color:#617586;
-    white-space:nowrap;
-}
-
-.company-wrap {
-    display:flex;
-    align-items:center;
-    gap:8px;
-    border:1px solid #d7e0e8;
-    border-radius:7px;
-    background:#fff;
-    padding:0 10px;
-    height:36px;
-}
-
-.company-label { color:#526779; }
-
-.company {
-    border:0;
-    outline:0;
-    background:transparent;
-    min-width:100px;
-    max-width:220px;
-    height:32px;
-    font:inherit;
-    color:#334a5e;
-}
-
-.actions {
-    display:flex;
-    align-items:center;
-    gap:7px;
-    margin-left:auto;
-    flex-wrap:wrap;
-}
-
-button {
-    font:600 12px "72","72full",Arial,sans-serif;
-    cursor:pointer;
-    border:1px solid #d1dae4;
-    background:#fff;
-    color:#1767ad;
-    border-radius:7px;
-    padding:0 13px;
-    height:32px;
-    white-space:nowrap;
-}
-
-button:hover {
-    background:#eef6ff;
-    border-color:#a9c9ed;
-}
-
-button.primary {
-    background:#0a6ed1;
-    border-color:#0a6ed1;
-    color:#fff;
-}
-
-button.primary:hover { background:#085caf; }
-button:disabled { opacity:.45; cursor:default; }
-
-.paging {
-    display:flex;
-    align-items:center;
-    justify-content:flex-end;
-    gap:9px;
-    padding:7px 10px;
-    color:#6a7c8c;
-    border-bottom:1px solid #e1e7ed;
-    min-height:42px;
-}
-
-.page-info { white-space:nowrap; }
-
-.table-area {
-    flex:1;
-    min-height:100px;
-    overflow:auto;
-    background:#fff;
-}
-
-table {
-    border-collapse:separate;
-    border-spacing:0;
-    table-layout:fixed;
-    width:100%;
-    min-width:850px;
-}
-
-th {
-    position:sticky;
-    top:0;
-    z-index:3;
-    height:40px;
-    padding:0 10px;
-    text-align:left;
-    white-space:nowrap;
-    background:#edf4fb;
-    color:#30495f;
-    border-bottom:1px solid #d4e0eb;
-    font-size:11px;
-    font-weight:700;
-}
-
-th:first-child,td:first-child {
-    width:60px;
-    text-align:center;
-}
-
-td {
-    height:46px;
-    padding:5px 8px;
-    border-bottom:1px solid #e7ebf0;
-    background:#fff;
-    vertical-align:middle;
-}
-
-tr:hover td { background:#f7fbff; }
-tr.selected td { background:#e5f2ff; }
-
-.check {
-    width:18px;
-    height:18px;
-    accent-color:#0a6ed1;
-    cursor:pointer;
-    vertical-align:middle;
-}
-
-.cell {
-    width:100%;
-    height:34px;
-    border:1px solid #d7dee7;
-    border-radius:6px;
-    background:#fff;
-    padding:0 9px;
-    color:#2e4356;
-    font:12px "72","72full",Arial,sans-serif;
-    outline:none;
-    min-width:0;
-}
-
-.cell:focus {
-    border-color:#0a6ed1;
-    box-shadow:0 0 0 2px #0a6ed11c;
-}
-
-.cell[readonly] {
-    background:#f1f4f7;
-    color:#5f7181;
-    cursor:not-allowed;
-}
-
-.dropdown-wrap { position:relative; }
-
-.dropdown {
-    width:100%;
-    height:34px;
-    padding:0 9px;
-    border:1px solid #d7dee7;
-    border-radius:6px;
-    background:#fff;
-    color:#2e4356;
-    font:12px "72","72full",Arial,sans-serif;
-    display:flex;
-    align-items:center;
-    justify-content:space-between;
-    gap:8px;
-    cursor:pointer;
-    text-align:left;
-}
-
-.dropdown-value {
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-}
-
-.dropdown-placeholder { color:#8797a6; }
-
-.dropdown-panel {
-    position:absolute;
-    left:0;
-    top:calc(100% + 3px);
-    width:max(240px,100%);
-    z-index:30;
-    background:#fff;
-    border:1px solid #cbd6e1;
-    border-radius:7px;
-    box-shadow:0 8px 22px #24374626;
-}
-
-.dropdown-search {
-    width:100%;
-    height:35px;
-    border:0;
-    border-bottom:1px solid #e1e7ed;
-    padding:0 10px;
-    outline:none;
-    font:12px Arial,sans-serif;
-}
-
-.option-list {
-    max-height:210px;
-    overflow:auto;
-}
-
-.option {
-    padding:9px 10px;
-    cursor:pointer;
-    overflow:hidden;
-    white-space:nowrap;
-    text-overflow:ellipsis;
-}
-
-.option:hover { background:#e5f1ff; }
-.option.active { background:#e5f1ff; color:#085caf; font-weight:600; }
-.no-options { padding:14px; color:#7a8997; text-align:center; }
-
-.status {
-    display:flex;
-    align-items:center;
-    gap:18px;
-    min-height:32px;
-    padding:0 10px;
-    border-top:1px solid #dfe6ee;
-    background:#f8fafc;
-    color:#607486;
-    font-size:11px;
-    white-space:nowrap;
-}
-
-.status strong { color:#344d62; }
-
-.empty {
-    padding:24px;
-    text-align:center;
-    color:#728394;
-}
+:host{display:block;width:100%;height:100%;min-height:250px;font-family:"72","72full",Arial,sans-serif;color:#243746;font-size:12px}
+*{box-sizing:border-box}
+.wrap{height:100%;min-height:250px;display:flex;flex-direction:column;background:#fff;border:1px solid #d9e0e7;border-radius:8px;overflow:hidden}
+.top{display:flex;align-items:center;gap:10px;flex-wrap:wrap;padding:10px;background:#f8fafc;border-bottom:1px solid #dfe6ee;min-height:56px}
+.search{height:36px;width:265px;max-width:100%;padding:0 12px;border:1px solid #cfd8e3;border-radius:7px;background:#fff;font:inherit;outline:none}
+.search:focus,.company:focus{border-color:#0a6ed1;box-shadow:0 0 0 2px #0a6ed11c}
+.visible{color:#617586;white-space:nowrap}
+.company-wrap{display:flex;align-items:center;gap:8px;border:1px solid #d7e0e8;border-radius:7px;background:#fff;padding:0 10px;height:36px}
+.company-label{color:#526779}
+.company{border:0;outline:0;background:transparent;min-width:100px;max-width:220px;height:32px;font:inherit;color:#334a5e}
+.actions{display:flex;align-items:center;gap:7px;margin-left:auto;flex-wrap:wrap}
+button{font:600 12px "72","72full",Arial,sans-serif;cursor:pointer;border:1px solid #d1dae4;background:#fff;color:#1767ad;border-radius:7px;padding:0 13px;height:32px;white-space:nowrap}
+button:hover{background:#eef6ff;border-color:#a9c9ed}
+button.primary{background:#0a6ed1;border-color:#0a6ed1;color:#fff}
+button.primary:hover{background:#085caf}
+button:disabled{opacity:.45;cursor:default}
+.paging{display:flex;align-items:center;justify-content:flex-end;gap:9px;padding:7px 10px;color:#6a7c8c;border-bottom:1px solid #e1e7ed;min-height:42px}
+.page-info{white-space:nowrap}
+.table-area{flex:1;min-height:100px;overflow:auto;background:#fff}
+table{border-collapse:separate;border-spacing:0;table-layout:fixed;width:100%;min-width:850px}
+th{position:sticky;top:0;z-index:3;height:40px;padding:0 10px;text-align:left;white-space:nowrap;background:#edf4fb;color:#30495f;border-bottom:1px solid #d4e0eb;font-size:11px;font-weight:700}
+th:first-child,td:first-child{width:60px;text-align:center}
+td{height:46px;padding:5px 8px;border-bottom:1px solid #e7ebf0;background:#fff;vertical-align:middle}
+tr:hover td{background:#f7fbff}
+tr.selected td{background:#e5f2ff}
+.check{width:18px;height:18px;accent-color:#0a6ed1;cursor:pointer;vertical-align:middle}
+.cell{width:100%;height:34px;border:1px solid #d7dee7;border-radius:6px;background:#fff;padding:0 9px;color:#2e4356;font:12px "72","72full",Arial,sans-serif;outline:none;min-width:0}
+.cell:focus{border-color:#0a6ed1;box-shadow:0 0 0 2px #0a6ed11c}
+.cell[readonly]{background:#f1f4f7;color:#5f7181;cursor:not-allowed}
+.dropdown-wrap{position:relative}
+.dropdown{width:100%;height:34px;padding:0 9px;border:1px solid #d7dee7;border-radius:6px;background:#fff;color:#2e4356;font:12px "72","72full",Arial,sans-serif;display:flex;align-items:center;justify-content:space-between;gap:8px;cursor:pointer;text-align:left}
+.dropdown-value{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dropdown-placeholder{color:#8797a6}
+.dropdown-panel{position:absolute;left:0;top:calc(100% + 3px);width:max(240px,100%);z-index:30;background:#fff;border:1px solid #cbd6e1;border-radius:7px;box-shadow:0 8px 22px #24374626}
+.dropdown-search{width:100%;height:35px;border:0;border-bottom:1px solid #e1e7ed;padding:0 10px;outline:none;font:12px Arial,sans-serif}
+.option-list{max-height:210px;overflow:auto}
+.option{padding:9px 10px;cursor:pointer;overflow:hidden;white-space:nowrap;text-overflow:ellipsis}
+.option:hover{background:#e5f1ff}
+.option.active{background:#e5f1ff;color:#085caf;font-weight:600}
+.no-options{padding:14px;color:#7a8997;text-align:center}
+.status{display:flex;align-items:center;gap:18px;min-height:32px;padding:0 10px;border-top:1px solid #dfe6ee;background:#f8fafc;color:#607486;font-size:11px;white-space:nowrap}
+.status strong{color:#344d62}
+.empty{padding:24px;text-align:center;color:#728394}
 `;
 
 var template = document.createElement("template");
-
 template.innerHTML =
     '<style>' + CSS + '</style>' +
     '<div class="wrap">' +
       '<div class="top">' +
         '<input id="search" class="search" placeholder="Search Asset ID..." aria-label="Search Asset ID">' +
         '<span class="visible">Visible: <strong id="visibleCount">0</strong></span>' +
-        '<div class="company-wrap">' +
-          '<span class="company-label">Asset Class</span>' +
-          '<select id="classFilter" class="company" aria-label="Filter by asset class">' +
-            '<option value="">All Classes</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="company-wrap">' +
-          '<span class="company-label">Company Code</span>' +
-          '<select id="companyCodeFilter" class="company" aria-label="Filter by company code">' +
-            '<option value="">All Company Codes</option>' +
-          '</select>' +
-        '</div>' +
-        '<div class="actions">' +
-          '<button id="load">Load Data</button>' +
-          '<button id="validate">Validate</button>' +
-          '<button id="save" class="primary">Save Changes</button>' +
-          '<button id="clear">Clear</button>' +
-        '</div>' +
+        '<div class="company-wrap"><span class="company-label">Asset Class</span>' +
+        '<select id="classFilter" class="company" aria-label="Filter by asset class"><option value="">All Classes</option></select></div>' +
+        '<div class="actions"><button id="load">Load Data</button><button id="validate">Validate</button><button id="save" class="primary">Save Changes</button><button id="clear">Clear</button></div>' +
       '</div>' +
-      '<div class="paging">' +
-        '<span id="range" class="page-info">Showing 0 to 0 of 0</span>' +
-        '<button id="prev">Previous</button>' +
-        '<span id="page">Page 1 of 1</span>' +
-        '<button id="next">Next</button>' +
-      '</div>' +
-      '<div class="table-area">' +
-        '<table><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table>' +
-      '</div>' +
-      '<div class="status">' +
-        '<span>Total Rows: <strong id="total">0</strong></span>' +
-        '<span>Selected Rows: <strong id="selected">0</strong></span>' +
-        '<span>Validation: <strong id="valid">-</strong></span>' +
-        '<span>Error Rows: <strong id="errors">0</strong></span>' +
-      '</div>' +
+      '<div class="paging"><span id="range" class="page-info">Showing 0 to 0 of 0</span><button id="prev">Previous</button><span id="page">Page 1 of 1</span><button id="next">Next</button></div>' +
+      '<div class="table-area"><table><thead><tr id="head"></tr></thead><tbody id="body"></tbody></table></div>' +
+      '<div class="status"><span>Total Rows: <strong id="total">0</strong></span><span>Selected Rows: <strong id="selected">0</strong></span><span>Validation: <strong id="valid">-</strong></span><span>Error Rows: <strong id="errors">0</strong></span></div>' +
     '</div>';
 
 class CWIPAssetEntry extends HTMLElement {
     constructor() {
         super();
-
-        this.attachShadow({mode:"open"})
-            .appendChild(template.content.cloneNode(true));
+        this.attachShadow({mode:"open"}).appendChild(template.content.cloneNode(true));
 
         this._rows = [];
         this._selected = new Set();
-        this._options = {assetClass:[], companyCode:[]};
+        this._options = {assetClass:[]};
         this._rowOptions = {};
         this._page = 1;
         this._pageSize = 50;
         this._search = "";
         this._classFilter = "";
-        this._companyCodeFilter = "";
         this._lastEvent = "";
         this._valid = null;
         this._errors = [];
         this._openDropdown = null;
+        this._rowKeyCounter = 0;
 
         var self = this;
-
-        [
-            "search","visibleCount","classFilter","companyCodeFilter",
-            "load","validate","save","clear",
-            "range","prev","page","next",
-            "head","body","total","selected","valid","errors"
-        ].forEach(function(id) {
+        ["search","visibleCount","classFilter","load","validate","save","clear",
+         "range","prev","page","next","head","body","total","selected","valid","errors"]
+        .forEach(function(id) {
             self[id] = self.shadowRoot.getElementById(id);
         });
 
@@ -404,12 +117,6 @@ class CWIPAssetEntry extends HTMLElement {
 
         this.classFilter.addEventListener("change",function() {
             self._classFilter = this.value;
-            self._page = 1;
-            self._render();
-        });
-
-        this.companyCodeFilter.addEventListener("change",function() {
-            self._companyCodeFilter = this.value;
             self._page = 1;
             self._render();
         });
@@ -445,11 +152,9 @@ class CWIPAssetEntry extends HTMLElement {
         };
 
         this.shadowRoot.addEventListener("click",function(e) {
-            if (!e.target.closest(".dropdown-wrap")) {
-                if (self._openDropdown) {
-                    self._openDropdown = null;
-                    self._render();
-                }
+            if (!e.target.closest(".dropdown-wrap") && self._openDropdown !== null) {
+                self._openDropdown = null;
+                self._render();
             }
         });
     }
@@ -459,32 +164,21 @@ class CWIPAssetEntry extends HTMLElement {
         this.dispatchEvent(new Event(name));
     }
 
-    _key(row,index) {
-        if (!row.__widgetKey) {
-            row.__widgetKey = "asset_" + index + "_" +
-                Math.random().toString(36).slice(2);
-        }
-        return row.__widgetKey;
+    _newKey() {
+        this._rowKeyCounter++;
+        return "asset_row_" + this._rowKeyCounter;
     }
 
     _normalize(rows) {
+        var self = this;
         return rows.map(function(source) {
             var row = Object.assign({},source);
 
             if (row.assetId === undefined && row.AssetID !== undefined)
                 row.assetId = row.AssetID;
-
             if (row.assetClass === undefined && row.AssetClass !== undefined)
                 row.assetClass = row.AssetClass;
-
-            if (row.companyCode === undefined && row.CompanyCode !== undefined)
-                row.companyCode = row.CompanyCode;
-            if (row.companyCode === undefined && row.company_code !== undefined)
-                row.companyCode = row.company_code;
-            if (row.companyCode == null) row.companyCode = "";
-
-            if (row.capitalizedMonth === undefined &&
-                row.CapitalizedMonth !== undefined)
+            if (row.capitalizedMonth === undefined && row.CapitalizedMonth !== undefined)
                 row.capitalizedMonth = row.CapitalizedMonth;
 
             if (row.assetId == null) row.assetId = "";
@@ -492,13 +186,12 @@ class CWIPAssetEntry extends HTMLElement {
             if (row.capitalizedMonth == null) row.capitalizedMonth = "";
 
             row.selected = false;
+            row.__widgetKey = self._newKey();
             return row;
         });
     }
 
-    /* Set rows from SAC scripting.
-       Expected fields: assetId, assetClass, capitalizedMonth.
-       capitalizedMonth should be YYYY-MM for input type="month". */
+    /* Input records should use YYYY-MM for capitalizedMonth. */
     setData(raw) {
         try {
             var parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -508,16 +201,27 @@ class CWIPAssetEntry extends HTMLElement {
         }
 
         this._selected.clear();
-        this._rowOptions = {};
         this._page = 1;
         this._valid = null;
         this._errors = [];
+        this._openDropdown = null;
         this._render();
     }
 
-    /* Return all current rows for SAC scripting. */
     getData() {
         return JSON.stringify(this._rows.map(function(row) {
+            var result = Object.assign({},row);
+            delete result.__widgetKey;
+            delete result.selected;
+            return result;
+        }));
+    }
+
+    getSelectedData() {
+        var self = this;
+        return JSON.stringify(this._rows.filter(function(row) {
+            return self._selected.has(row.__widgetKey);
+        }).map(function(row) {
             var result = Object.assign({},row);
             delete result.__widgetKey;
             delete result.selected;
@@ -529,39 +233,24 @@ class CWIPAssetEntry extends HTMLElement {
         return this._lastEvent;
     }
 
-    getSelectedData() {
-        var self = this;
+    setCellValue(rowIndex,fieldName,value) {
+        var row = this._rows[rowIndex];
+        if (!row) return;
 
-        return JSON.stringify(this._rows.filter(function(row,index) {
-            return self._selected.has(self._key(row,index));
-        }).map(function(row) {
-            var result = Object.assign({},row);
-            delete result.__widgetKey;
-            delete result.selected;
-            return result;
-        }));
-    }
-
-    setCellValue(rowIndex,field,value) {
-        if (!this._rows[rowIndex]) return;
-
-        /* Asset ID is always read-only in the UI. */
-        if (field === "assetId") {
-            this._rows[rowIndex].assetId = value;
-        } else if (
-            field === "assetClass" ||
-            field === "capitalizedMonth"
-        ) {
-            this._rows[rowIndex][field] = value;
+        if (fieldName === "assetId") {
+            /* Asset ID can be populated by SAC, but not edited in the UI. */
+            row.assetId = value;
+        } else if (fieldName === "assetClass" || fieldName === "capitalizedMonth") {
+            row[fieldName] = value;
         } else {
             return;
         }
 
         this._valid = null;
+        this._errors = [];
         this._render();
     }
 
-    /* Pass a JSON array of asset-class dropdown values. */
     setOptions(raw) {
         try {
             var parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -574,107 +263,63 @@ class CWIPAssetEntry extends HTMLElement {
         this._render();
     }
 
-    setRowOptions(rowIndex,field,raw) {
-        if (field !== "assetClass" || !Number.isInteger(rowIndex) || rowIndex < 0) {
-            return;
-        }
+    setRowOptions(rowIndex,fieldName,raw) {
+        if (fieldName !== "assetClass") return;
 
-        var options;
         try {
-            options = typeof raw === "string" ? JSON.parse(raw) : raw;
-        } catch (e) {
-            options = [];
-        }
-
-        if (!Array.isArray(options)) {
-            options = [];
-        }
-
-        if (!this._rowOptions[rowIndex]) {
-            this._rowOptions[rowIndex] = {};
-        }
-
-        this._rowOptions[rowIndex][field] = options;
-
-        if (this._openDropdown === rowIndex) {
-            this._openDropdown = null;
+            var parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            this._rowOptions[rowIndex] = Array.isArray(parsed) ? parsed : [];
+        } catch(e) {
+            this._rowOptions[rowIndex] = [];
         }
 
         this._render();
+    }
+
+    _getOptions(rowIndex,fieldName) {
+        if (fieldName === "assetClass" &&
+            Object.prototype.hasOwnProperty.call(this._rowOptions,rowIndex)) {
+            return this._rowOptions[rowIndex];
+        }
+        return this._options[fieldName] || [];
     }
 
     _syncClassFilter() {
-        var self = this;
-        var oldValue = this._classFilter;
         var select = this.classFilter;
+        var oldValue = this._classFilter;
+        var opts = this._options.assetClass || [];
 
         select.innerHTML = '<option value="">All Classes</option>';
 
-        (this._options.assetClass || []).forEach(function(option) {
+        opts.forEach(function(option) {
             var value = typeof option === "object" ? option.value : option;
             var label = typeof option === "object" ?
-                (option.text !== undefined ? option.text : option.value) :
-                option;
+                (option.text !== undefined ? option.text : option.value) : option;
 
-            var opt = document.createElement("option");
-            opt.value = String(value);
-            opt.textContent = String(label);
-            select.appendChild(opt);
+            var el = document.createElement("option");
+            el.value = String(value);
+            el.textContent = String(label);
+            select.appendChild(el);
         });
 
         select.value = oldValue;
-        if (select.value !== oldValue) this._classFilter = "";
-    }
-
-    setCompanyCodeOptions(raw) {
-        try {
-            var parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
-            this._options.companyCode = Array.isArray(parsed) ? parsed : [];
-        } catch(e) {
-            this._options.companyCode = [];
+        if (select.value !== oldValue) {
+            this._classFilter = "";
+            select.value = "";
         }
-        this._syncCompanyCodeFilter();
-        this._render();
-    }
-
-    _syncCompanyCodeFilter() {
-        var select = this.companyCodeFilter;
-        var oldValue = this._companyCodeFilter;
-        var configured = this._options.companyCode || [];
-        var values = configured.length ? configured : this._rows.map(function(row) { return row.companyCode; });
-        var unique = [];
-        values.forEach(function(option) {
-            var value = typeof option === "object" ? option.value : option;
-            if (value !== undefined && value !== null && String(value) !== "" && !unique.some(function(v) { return String(v.value) === String(value); })) {
-                unique.push({value:value, text: typeof option === "object" && option.text !== undefined ? option.text : value});
-            }
-        });
-        select.innerHTML = '<option value="">All Company Codes</option>';
-        unique.forEach(function(item) {
-            var opt = document.createElement("option");
-            opt.value = String(item.value);
-            opt.textContent = String(item.text);
-            select.appendChild(opt);
-        });
-        select.value = oldValue;
-        if (select.value !== oldValue) this._companyCodeFilter = "";
     }
 
     _filtered() {
         var query = this._search.toLowerCase();
         var assetClass = this._classFilter;
-        var companyCode = this._companyCodeFilter;
 
-        return this._rows.map(function(row,index) {
-            return {row:row,index:index};
-        }).filter(function(item) {
-            var id = String(item.row.assetId || "").toLowerCase();
-            var cls = String(item.row.assetClass || "");
-            var code = String(item.row.companyCode || "");
-
+        return this._rows.map(function(row) {
+            return row;
+        }).filter(function(row) {
+            var id = String(row.assetId || "").toLowerCase();
+            var cls = String(row.assetClass || "");
             return (!query || id.indexOf(query) !== -1) &&
-                   (!assetClass || cls === assetClass) &&
-                   (!companyCode || code === companyCode);
+                   (!assetClass || cls === assetClass);
         });
     }
 
@@ -690,10 +335,9 @@ class CWIPAssetEntry extends HTMLElement {
         if (this._page > pageCount) this._page = pageCount;
 
         var start = (this._page - 1) * this._pageSize;
-        var pageItems = filtered.slice(start,start + this._pageSize);
+        var pageRows = filtered.slice(start,start + this._pageSize);
 
         this._syncClassFilter();
-        this._syncCompanyCodeFilter();
 
         this.head.innerHTML =
             '<th class="selhead">Sel <input id="selectAll" class="check" type="checkbox"></th>' +
@@ -703,18 +347,20 @@ class CWIPAssetEntry extends HTMLElement {
             }).join("");
 
         var selectAll = this.shadowRoot.getElementById("selectAll");
-
-        selectAll.checked = pageItems.length > 0 &&
-            pageItems.every(function(item) {
-                return self._selected.has(self._key(item.row,item.index));
+        selectAll.checked = pageRows.length > 0 &&
+            pageRows.every(function(row) {
+                return self._selected.has(row.__widgetKey);
             });
 
-        selectAll.onchange = function() {
-            pageItems.forEach(function(item) {
-                var key = self._key(item.row,item.index);
+        selectAll.indeterminate = pageRows.some(function(row) {
+            return self._selected.has(row.__widgetKey);
+        }) && !selectAll.checked;
 
-                if (selectAll.checked) self._selected.add(key);
-                else self._selected.delete(key);
+        selectAll.onchange = function() {
+            pageRows.forEach(function(row) {
+                if (selectAll.checked) self._selected.add(row.__widgetKey);
+                else self._selected.delete(row.__widgetKey);
+                row.selected = selectAll.checked;
             });
 
             self._render();
@@ -723,22 +369,20 @@ class CWIPAssetEntry extends HTMLElement {
 
         this.body.innerHTML = "";
 
-        if (!pageItems.length) {
+        if (!pageRows.length) {
             this.body.innerHTML =
                 '<tr><td class="empty" colspan="4">No matching records</td></tr>';
         }
 
-        pageItems.forEach(function(item) {
-            var row = item.row;
-            var index = item.index;
-            var key = self._key(row,index);
+        pageRows.forEach(function(row) {
+            var index = self._rows.indexOf(row);
+            var key = row.__widgetKey;
             var tr = document.createElement("tr");
 
             if (self._selected.has(key)) tr.classList.add("selected");
 
             var selectCell = document.createElement("td");
             var checkbox = document.createElement("input");
-
             checkbox.type = "checkbox";
             checkbox.className = "check";
             checkbox.checked = self._selected.has(key);
@@ -747,8 +391,10 @@ class CWIPAssetEntry extends HTMLElement {
                 if (checkbox.checked) self._selected.add(key);
                 else self._selected.delete(key);
 
+                row.selected = checkbox.checked;
                 self._render();
-                self._fire("onDataChange","selectRow|" + index + "|" + checkbox.checked);
+                self._fire("onDataChange",
+                    "selectRow|" + index + "|" + checkbox.checked);
             };
 
             selectCell.appendChild(checkbox);
@@ -779,11 +425,8 @@ class CWIPAssetEntry extends HTMLElement {
                         self._errors = [];
                         self._updateStatus();
 
-                        self._fire(
-                            "onFieldChange",
-                            "fieldChange|" + index + "|" +
-                            col.field + "|" + control.value
-                        );
+                        self._fire("onFieldChange",
+                            "fieldChange|" + index + "|" + col.field + "|" + control.value);
                     });
                 }
 
@@ -795,12 +438,10 @@ class CWIPAssetEntry extends HTMLElement {
         });
 
         this.visibleCount.textContent = filtered.length;
-
         this.range.textContent = filtered.length ?
             "Showing " + (start + 1) + " to " +
             Math.min(start + this._pageSize,filtered.length) +
-            " of " + filtered.length :
-            "Showing 0 to 0 of 0";
+            " of " + filtered.length : "Showing 0 to 0 of 0";
 
         this.page.textContent = "Page " + this._page + " of " + pageCount;
         this.prev.disabled = this._page <= 1;
@@ -809,16 +450,14 @@ class CWIPAssetEntry extends HTMLElement {
         this._updateStatus();
     }
 
-    _buildDropdown(row,index,col) {
+    _buildDropdown(row,rowIndex,col) {
         var self = this;
         var wrap = document.createElement("div");
         wrap.className = "dropdown-wrap";
 
         var value = row[col.field] || "";
-        var rowSpecific = this._rowOptions[index] &&
-            this._rowOptions[index][col.field];
-        var options = rowSpecific || this._options.assetClass || [];
-        var open = this._openDropdown === index;
+        var options = this._getOptions(rowIndex,col.field);
+        var open = this._openDropdown === row.__widgetKey;
 
         var selectedOption = options.find(function(option) {
             var v = typeof option === "object" ? option.value : option;
@@ -827,18 +466,15 @@ class CWIPAssetEntry extends HTMLElement {
 
         var label = selectedOption ?
             (typeof selectedOption === "object" ?
-                (selectedOption.text !== undefined ?
-                    selectedOption.text : selectedOption.value) :
-                selectedOption) :
-            value;
+                (selectedOption.text !== undefined ? selectedOption.text : selectedOption.value) :
+                selectedOption) : value;
 
         var button = document.createElement("button");
         button.type = "button";
         button.className = "dropdown";
 
         var valueSpan = document.createElement("span");
-        valueSpan.className = "dropdown-value" +
-            (label ? "" : " dropdown-placeholder");
+        valueSpan.className = "dropdown-value" + (label ? "" : " dropdown-placeholder");
         valueSpan.textContent = label || "Select Asset Class";
 
         var arrow = document.createElement("span");
@@ -849,7 +485,7 @@ class CWIPAssetEntry extends HTMLElement {
 
         button.onclick = function(e) {
             e.stopPropagation();
-            self._openDropdown = open ? null : index;
+            self._openDropdown = open ? null : row.__widgetKey;
             self._render();
         };
 
@@ -879,8 +515,7 @@ class CWIPAssetEntry extends HTMLElement {
             var matches = options.filter(function(option) {
                 var v = typeof option === "object" ? option.value : option;
                 var text = typeof option === "object" ?
-                    (option.text !== undefined ? option.text : option.value) :
-                    option;
+                    (option.text !== undefined ? option.text : option.value) : option;
 
                 return String(text).toLowerCase().indexOf(q) !== -1 ||
                        String(v).toLowerCase().indexOf(q) !== -1;
@@ -897,8 +532,7 @@ class CWIPAssetEntry extends HTMLElement {
             matches.forEach(function(option) {
                 var v = typeof option === "object" ? option.value : option;
                 var text = typeof option === "object" ?
-                    (option.text !== undefined ? option.text : option.value) :
-                    option;
+                    (option.text !== undefined ? option.text : option.value) : option;
 
                 var opt = document.createElement("div");
                 opt.className = "option" +
@@ -907,17 +541,14 @@ class CWIPAssetEntry extends HTMLElement {
 
                 opt.onclick = function(e) {
                     e.stopPropagation();
-
                     row.assetClass = String(v);
                     self._openDropdown = null;
                     self._valid = null;
                     self._errors = [];
                     self._render();
 
-                    self._fire(
-                        "onFieldChange",
-                        "fieldChange|" + index + "|assetClass|" + v
-                    );
+                    self._fire("onFieldChange",
+                        "fieldChange|" + rowIndex + "|assetClass|" + v);
                 };
 
                 list.appendChild(opt);
@@ -941,26 +572,12 @@ class CWIPAssetEntry extends HTMLElement {
         var errors = [];
 
         this._rows.forEach(function(row,index) {
-            if (!row.assetId) {
-                errors.push({row:index,field:"assetId",message:"Asset ID missing"});
-            }
+            if (!row.assetId) errors.push({row:index,field:"assetId"});
+            if (!row.assetClass) errors.push({row:index,field:"assetClass"});
 
-            if (!row.assetClass) {
-                errors.push({row:index,field:"assetClass",message:"Asset Class required"});
-            }
-
-            if (!row.capitalizedMonth) {
-                errors.push({
-                    row:index,
-                    field:"capitalizedMonth",
-                    message:"Capitalized Month required"
-                });
-            } else if (!/^\d{4}-\d{2}$/.test(row.capitalizedMonth)) {
-                errors.push({
-                    row:index,
-                    field:"capitalizedMonth",
-                    message:"Month must be YYYY-MM"
-                });
+            if (!row.capitalizedMonth ||
+                !/^\d{4}-\d{2}$/.test(row.capitalizedMonth)) {
+                errors.push({row:index,field:"capitalizedMonth"});
             }
         });
 
@@ -968,46 +585,40 @@ class CWIPAssetEntry extends HTMLElement {
         this._valid = errors.length === 0;
         this._updateStatus();
 
-        this._fire(
-            "onValidate",
-            (this._valid ? "VALID" : "INVALID") + "|" + errors.length
-        );
+        this._fire("onValidate",
+            (this._valid ? "VALID" : "INVALID") + "|" + errors.length);
     }
 
     _clearSelectedOrAll() {
         var self = this;
 
         if (this._selected.size) {
-            this._rows.forEach(function(row,index) {
-                if (self._selected.has(self._key(row,index))) {
-                    /* Never clear the model-supplied Asset ID. */
+            this._rows.forEach(function(row) {
+                if (self._selected.has(row.__widgetKey)) {
                     row.assetClass = "";
                     row.capitalizedMonth = "";
                 }
             });
-
-            this._selected.clear();
         } else {
-            /* With no selection, clear editable values for all rows. */
             this._rows.forEach(function(row) {
                 row.assetClass = "";
                 row.capitalizedMonth = "";
             });
         }
 
+        this._selected.clear();
         this._valid = null;
         this._errors = [];
         this._openDropdown = null;
         this._render();
-        this._fire("onClear","clear");
+        this._fire("onClear","clear|" + this._rows.length);
     }
 
     _updateStatus() {
         this.total.textContent = this._rows.length;
         this.selected.textContent = this._selected.size;
         this.valid.textContent =
-            this._valid === null ? "-" :
-            (this._valid ? "Valid" : "Invalid");
+            this._valid === null ? "-" : (this._valid ? "Valid" : "Invalid");
         this.errors.textContent = this._errors.length;
     }
 
@@ -1022,10 +633,7 @@ class CWIPAssetEntry extends HTMLElement {
 }
 
 if (!customElements.get("com-madhav-cwipassetentry")) {
-    customElements.define(
-        "com-madhav-cwipassetentry",
-        CWIPAssetEntry
-    );
+    customElements.define("com-madhav-cwipassetentry",CWIPAssetEntry);
 }
 
 })();
