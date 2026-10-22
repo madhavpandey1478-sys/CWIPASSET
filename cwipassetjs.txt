@@ -901,42 +901,67 @@ class CWIPAssetEntry extends HTMLElement {
         return wrap;
     }
 
-    _validate() {
-        var errors = [];
+   
+_validate() {
+    var errors = [];
+    var self = this;
 
-        this._rows.forEach(function(row,index) {
-            if (!row.assetId) {
-                errors.push({row:index,field:"assetId",message:"Asset ID missing"});
-            }
+    // Validate selected rows only.
+    var selectedRows = this._rows.filter(function(row, index) {
+        return self._selected.has(self._key(row, index));
+    });
 
-            if (!row.assetClass) {
-                errors.push({row:index,field:"assetClass",message:"Asset Class required"});
-            }
+    if (selectedRows.length === 0) {
+        errors.push({
+            row: -1,
+            field: "",
+            message: "Please select at least one asset row to validate."
+        });
+    } else {
+        selectedRows.forEach(function(row) {
+            var index = self._rows.indexOf(row);
 
-            if (!row.capitalizedMonth) {
+            if (!row.assetId || row.assetId === "") {
                 errors.push({
-                    row:index,
-                    field:"capitalizedMonth",
-                    message:"Capitalized Month required"
+                    row: index,
+                    field: "assetId",
+                    message: "Asset ID missing"
                 });
-            } else if (!/^\d{4}-\d{2}$/.test(row.capitalizedMonth)) {
+            }
+
+            if (!row.assetClass || row.assetClass === "") {
                 errors.push({
-                    row:index,
-                    field:"capitalizedMonth",
-                    message:"Month must be YYYY-MM"
+                    row: index,
+                    field: "assetClass",
+                    message: "Asset Class required"
+                });
+            }
+
+            if (!row.capitalizedMonth || row.capitalizedMonth === "") {
+                errors.push({
+                    row: index,
+                    field: "capitalizedMonth",
+                    message: "Capitalized Month required"
+                });
+            } else if (!/^\d{4}-(0[1-9]|1[0-2])$/.test(row.capitalizedMonth)) {
+                errors.push({
+                    row: index,
+                    field: "capitalizedMonth",
+                    message: "Month must be YYYY-MM"
                 });
             }
         });
-
-        this._errors = errors;
-        this._valid = errors.length === 0;
-        this._updateStatus();
-
-        this._fire(
-            "onValidate",
-            (this._valid ? "VALID" : "INVALID") + "|" + errors.length
-        );
     }
+
+    this._errors = errors;
+    this._valid = errors.length === 0;
+    this._updateStatus();
+
+    this._fire(
+        "onValidate",
+        (this._valid ? "VALID" : "INVALID") + "|" + errors.length
+    );
+}
 
     _clearSelectedOrAll() {
         var self = this;
