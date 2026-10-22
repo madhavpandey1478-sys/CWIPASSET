@@ -2,28 +2,19 @@
 (function () {
 "use strict";
 
+/* =========================================================
+   CWIP CAPEX ASSET ENTRY
+   Fields: Asset ID, Asset Class, Capitalized Month
+   ========================================================= */
+
 var FIELDS = [
-  {field:"employeeId", label:"Position ID", type:"text", width:135, readonly:true},
-  {field:"companyCode", label:"Company Code", type:"select", width:160},
-  {field:"division", label:"Division", type:"select", width:300},
-  {field:"department", label:"Department", type:"select", width:300},
-  {field:"costCenter", label:"Cost Center", type:"select", width:270},
-  {field:"jobCode", label:"Job Code", type:"select", width:280},
-  {field:"positionTitle", label:"Position Title", type:"text", width:220},
-  {field:"payGradeGroup", label:"Pay Grade", type:"select", width:150},
-  {field:"payGradeLevel", label:"Level", type:"select", width:110},
-  {field:"hireDate", label:"Hire Date", type:"date", width:150},
-  {field:"nationality", label:"Nationality", type:"select", width:180},
-  {field:"accommodation", label:"Accommodation", type:"select", width:180},
-  {field:"transport", label:"Transport", type:"select", width:160},
-  {field:"employeeClass", label:"Employee Class", type:"select", width:180},
-  {field:"overtime", label:"Overtime", type:"select", width:140},
-  {field:"specialApproval", label:"Special Approval", type:"select", width:180},
-  {field:"comment", label:"Comment", type:"text", width:250}
+    { field: "assetId", label: "Asset ID", type: "text", width: 200, readonly: true },
+    { field: "assetClass", label: "Asset Class", type: "select", width: 300 },
+    { field: "capitalizedMonth", label: "Capitalized Month", type: "month", width: 240 }
 ];
 
-var ALL_FIELDS = FIELDS.map(function(c) {
-    return c.field;
+var ALL_FIELDS = FIELDS.map(function (f) {
+    return f.field;
 });
 
 var CSS = `
@@ -80,7 +71,6 @@ var CSS = `
 .visible {
     color:#617586;
     white-space:nowrap;
-    margin-right:2px;
 }
 
 .company-wrap {
@@ -89,23 +79,18 @@ var CSS = `
     gap:8px;
     border:1px solid #d7e0e8;
     border-radius:7px;
-    background:white;
+    background:#fff;
     padding:0 10px;
     height:36px;
-    min-width:190px;
-    max-width:300px;
 }
 
-.company-label {
-    color:#526779;
-    white-space:nowrap;
-}
+.company-label { color:#526779; }
 
 .company {
     border:0;
     outline:0;
     background:transparent;
-    min-width:0;
+    min-width:100px;
     max-width:220px;
     height:32px;
     font:inherit;
@@ -170,8 +155,8 @@ table {
     border-collapse:separate;
     border-spacing:0;
     table-layout:fixed;
-    width:max-content;
-    min-width:100%;
+    width:100%;
+    min-width:850px;
 }
 
 th {
@@ -179,7 +164,7 @@ th {
     top:0;
     z-index:3;
     height:40px;
-    padding:0 9px;
+    padding:0 10px;
     text-align:left;
     white-space:nowrap;
     background:#edf4fb;
@@ -190,13 +175,9 @@ th {
 }
 
 th:first-child,td:first-child {
-    position:sticky;
-    left:0;
-    z-index:2;
-    background:#f7f9fb;
+    width:60px;
+    text-align:center;
 }
-
-th:first-child { z-index:4; }
 
 td {
     height:46px;
@@ -207,15 +188,7 @@ td {
 }
 
 tr:hover td { background:#f7fbff; }
-
 tr.selected td { background:#e5f2ff; }
-tr.selected td:first-child { background:#e5f2ff; }
-
-.selhead {
-    width:62px;
-    min-width:62px;
-    text-align:center;
-}
 
 .check {
     width:18px;
@@ -227,7 +200,7 @@ tr.selected td:first-child { background:#e5f2ff; }
 
 .cell {
     width:100%;
-    height:32px;
+    height:34px;
     border:1px solid #d7dee7;
     border-radius:6px;
     background:#fff;
@@ -244,11 +217,76 @@ tr.selected td:first-child { background:#e5f2ff; }
 }
 
 .cell[readonly] {
-    background:#f4f6f8;
+    background:#f1f4f7;
     color:#5f7181;
+    cursor:not-allowed;
 }
 
-select.cell { padding-right:4px; }
+.dropdown-wrap { position:relative; }
+
+.dropdown {
+    width:100%;
+    height:34px;
+    padding:0 9px;
+    border:1px solid #d7dee7;
+    border-radius:6px;
+    background:#fff;
+    color:#2e4356;
+    font:12px "72","72full",Arial,sans-serif;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    cursor:pointer;
+    text-align:left;
+}
+
+.dropdown-value {
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+}
+
+.dropdown-placeholder { color:#8797a6; }
+
+.dropdown-panel {
+    position:absolute;
+    left:0;
+    top:calc(100% + 3px);
+    width:max(240px,100%);
+    z-index:30;
+    background:#fff;
+    border:1px solid #cbd6e1;
+    border-radius:7px;
+    box-shadow:0 8px 22px #24374626;
+}
+
+.dropdown-search {
+    width:100%;
+    height:35px;
+    border:0;
+    border-bottom:1px solid #e1e7ed;
+    padding:0 10px;
+    outline:none;
+    font:12px Arial,sans-serif;
+}
+
+.option-list {
+    max-height:210px;
+    overflow:auto;
+}
+
+.option {
+    padding:9px 10px;
+    cursor:pointer;
+    overflow:hidden;
+    white-space:nowrap;
+    text-overflow:ellipsis;
+}
+
+.option:hover { background:#e5f1ff; }
+.option.active { background:#e5f1ff; color:#085caf; font-weight:600; }
+.no-options { padding:14px; color:#7a8997; text-align:center; }
 
 .status {
     display:flex;
@@ -270,13 +308,6 @@ select.cell { padding-right:4px; }
     text-align:center;
     color:#728394;
 }
-
-@media(max-width:700px) {
-    .actions { margin-left:0; }
-    .top { align-items:flex-start; }
-    .company-wrap { max-width:100%; }
-    .paging { justify-content:flex-start; flex-wrap:wrap; }
-}
 `;
 
 var template = document.createElement("template");
@@ -285,12 +316,12 @@ template.innerHTML =
     '<style>' + CSS + '</style>' +
     '<div class="wrap">' +
       '<div class="top">' +
-        '<input id="search" class="search" placeholder="Search Position ID..." aria-label="Search Position ID">' +
+        '<input id="search" class="search" placeholder="Search Asset ID..." aria-label="Search Asset ID">' +
         '<span class="visible">Visible: <strong id="visibleCount">0</strong></span>' +
         '<div class="company-wrap">' +
-          '<span class="company-label">Company</span>' +
-          '<select id="companyFilter" class="company" aria-label="Filter by company">' +
-            '<option value="">All Companies</option>' +
+          '<span class="company-label">Asset Class</span>' +
+          '<select id="classFilter" class="company" aria-label="Filter by asset class">' +
+            '<option value="">All Classes</option>' +
           '</select>' +
         '</div>' +
         '<div class="actions">' +
@@ -318,7 +349,6 @@ template.innerHTML =
     '</div>';
 
 class CWIPAssetEntry extends HTMLElement {
-
     constructor() {
         super();
 
@@ -327,25 +357,25 @@ class CWIPAssetEntry extends HTMLElement {
 
         this._rows = [];
         this._selected = new Set();
-        this._options = {};
-        this._companyOptions = [];
+        this._options = {assetClass:[]};
         this._page = 1;
         this._pageSize = 50;
         this._search = "";
-        this._company = "";
+        this._classFilter = "";
         this._lastEvent = "";
         this._valid = null;
         this._errors = [];
+        this._openDropdown = null;
 
-        this._el = {};
+        var self = this;
 
         [
-            "search","visibleCount","companyFilter",
+            "search","visibleCount","classFilter",
             "load","validate","save","clear",
             "range","prev","page","next",
             "head","body","total","selected","valid","errors"
-        ].forEach((id) => {
-            this._el[id] = this.shadowRoot.getElementById(id);
+        ].forEach(function(id) {
+            self[id] = self.shadowRoot.getElementById(id);
         });
 
         this._bind();
@@ -359,47 +389,56 @@ class CWIPAssetEntry extends HTMLElement {
     _bind() {
         var self = this;
 
-        this._el.search.addEventListener("input", function() {
+        this.search.addEventListener("input",function() {
             self._search = this.value;
             self._page = 1;
             self._render();
         });
 
-        this._el.companyFilter.addEventListener("change", function() {
-            self._company = this.value;
+        this.classFilter.addEventListener("change",function() {
+            self._classFilter = this.value;
             self._page = 1;
             self._render();
         });
 
-        this._el.prev.onclick = function() {
+        this.prev.onclick = function() {
             if (self._page > 1) {
                 self._page--;
                 self._render();
             }
         };
 
-        this._el.next.onclick = function() {
+        this.next.onclick = function() {
             if (self._page < self._pageCount()) {
                 self._page++;
                 self._render();
             }
         };
 
-        this._el.load.onclick = function() {
+        this.load.onclick = function() {
             self._fire("onDataChange","loadData");
         };
 
-        this._el.validate.onclick = function() {
+        this.validate.onclick = function() {
             self._validate();
         };
 
-        this._el.save.onclick = function() {
+        this.save.onclick = function() {
             self._fire("onDataChange","saveChanges|" + self._rows.length);
         };
 
-        this._el.clear.onclick = function() {
+        this.clear.onclick = function() {
             self._clearSelectedOrAll();
         };
+
+        this.shadowRoot.addEventListener("click",function(e) {
+            if (!e.target.closest(".dropdown-wrap")) {
+                if (self._openDropdown) {
+                    self._openDropdown = null;
+                    self._render();
+                }
+            }
+        });
     }
 
     _fire(name,value) {
@@ -409,28 +448,38 @@ class CWIPAssetEntry extends HTMLElement {
 
     _key(row,index) {
         if (!row.__widgetKey) {
-            row.__widgetKey = "row_" + index + "_" +
+            row.__widgetKey = "asset_" + index + "_" +
                 Math.random().toString(36).slice(2);
         }
         return row.__widgetKey;
     }
 
     _normalize(rows) {
-        return rows.map(function(src) {
-            var r = Object.assign({},src);
+        return rows.map(function(source) {
+            var row = Object.assign({},source);
 
-            ALL_FIELDS.forEach(function(f) {
-                if (r[f] === undefined || r[f] === null) {
-                    r[f] = "";
-                }
-            });
+            if (row.assetId === undefined && row.AssetID !== undefined)
+                row.assetId = row.AssetID;
 
-            r.selected = !!r.selected;
-            return r;
+            if (row.assetClass === undefined && row.AssetClass !== undefined)
+                row.assetClass = row.AssetClass;
+
+            if (row.capitalizedMonth === undefined &&
+                row.CapitalizedMonth !== undefined)
+                row.capitalizedMonth = row.CapitalizedMonth;
+
+            if (row.assetId == null) row.assetId = "";
+            if (row.assetClass == null) row.assetClass = "";
+            if (row.capitalizedMonth == null) row.capitalizedMonth = "";
+
+            row.selected = false;
+            return row;
         });
     }
 
-    /* SAC scripting API: load the rows as a JSON string. */
+    /* Set rows from SAC scripting.
+       Expected fields: assetId, assetClass, capitalizedMonth.
+       capitalizedMonth should be YYYY-MM for input type="month". */
     setData(raw) {
         try {
             var parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
@@ -443,17 +492,16 @@ class CWIPAssetEntry extends HTMLElement {
         this._page = 1;
         this._valid = null;
         this._errors = [];
-
-        this._syncCompanyOptions();
         this._render();
     }
 
-    /* SAC scripting API: retrieve all rows including edits. */
+    /* Return all current rows for SAC scripting. */
     getData() {
-        return JSON.stringify(this._rows.map(function(r) {
-            var c = Object.assign({},r);
-            delete c.__widgetKey;
-            return c;
+        return JSON.stringify(this._rows.map(function(row) {
+            var result = Object.assign({},row);
+            delete result.__widgetKey;
+            delete result.selected;
+            return result;
         }));
     }
 
@@ -464,123 +512,89 @@ class CWIPAssetEntry extends HTMLElement {
     getSelectedData() {
         var self = this;
 
-        return JSON.stringify(
-            this._rows.filter(function(r,i) {
-                return self._selected.has(self._key(r,i));
-            }).map(function(r) {
-                var c = Object.assign({},r);
-                delete c.__widgetKey;
-                return c;
-            })
-        );
+        return JSON.stringify(this._rows.filter(function(row,index) {
+            return self._selected.has(self._key(row,index));
+        }).map(function(row) {
+            var result = Object.assign({},row);
+            delete result.__widgetKey;
+            delete result.selected;
+            return result;
+        }));
     }
 
     setCellValue(rowIndex,field,value) {
         if (!this._rows[rowIndex]) return;
 
-        this._rows[rowIndex][field] = value;
-        this._rows[rowIndex].isModified = true;
+        /* Asset ID is always read-only in the UI. */
+        if (field === "assetId") {
+            this._rows[rowIndex].assetId = value;
+        } else if (
+            field === "assetClass" ||
+            field === "capitalizedMonth"
+        ) {
+            this._rows[rowIndex][field] = value;
+        } else {
+            return;
+        }
+
         this._valid = null;
         this._render();
     }
 
-    /* Provide dropdown options by field name. */
+    /* Pass a JSON array of asset-class dropdown values. */
     setOptions(raw) {
         try {
-            this._options = typeof raw === "string" ?
-                JSON.parse(raw) : (raw || {});
+            var parsed = typeof raw === "string" ? JSON.parse(raw) : raw;
+            this._options.assetClass = Array.isArray(parsed) ? parsed : [];
         } catch(e) {
-            this._options = {};
+            this._options.assetClass = [];
         }
 
-        this._syncCompanyOptions();
+        this._syncClassFilter();
         this._render();
     }
 
     setRowOptions(rowIndex,field,raw) {
-        try {
-            var opts = typeof raw === "string" ?
-                JSON.parse(raw) : raw;
+        if (field !== "assetClass") return;
 
-            this._options[field] = opts || [];
-        } catch(e) {
-            this._options[field] = [];
-        }
-
-        this._render();
+        this.setOptions(raw);
     }
 
-    setCompanyOptions(raw) {
-        try {
-            this._companyOptions = typeof raw === "string" ?
-                JSON.parse(raw) : (raw || []);
-        } catch(e) {
-            this._companyOptions = [];
-        }
-
-        this._syncCompanyOptions();
-        this._render();
-    }
-
-    _syncCompanyOptions() {
-        var vals = this._companyOptions.slice();
+    _syncClassFilter() {
         var self = this;
+        var oldValue = this._classFilter;
+        var select = this.classFilter;
 
-        if (!vals.length) {
-            this._rows.forEach(function(r) {
-                if (r.companyCode !== "" && r.companyCode != null) {
-                    var exists = vals.some(function(x) {
-                        return String(typeof x === "object" ? x.value : x)
-                            === String(r.companyCode);
-                    });
+        select.innerHTML = '<option value="">All Classes</option>';
 
-                    if (!exists) vals.push(r.companyCode);
-                }
-            });
-        }
+        (this._options.assetClass || []).forEach(function(option) {
+            var value = typeof option === "object" ? option.value : option;
+            var label = typeof option === "object" ?
+                (option.text !== undefined ? option.text : option.value) :
+                option;
 
-        var sel = this._el.companyFilter;
-        var current = this._company;
-
-        sel.innerHTML = '<option value="">All Companies</option>';
-
-        vals.forEach(function(o) {
-            var value = typeof o === "object" ? o.value : o;
-            var label = typeof o === "object" ?
-                (o.text !== undefined ? o.text : o.value) : o;
-
-            var op = document.createElement("option");
-            op.value = String(value);
-            op.textContent = String(label);
-            sel.appendChild(op);
+            var opt = document.createElement("option");
+            opt.value = String(value);
+            opt.textContent = String(label);
+            select.appendChild(opt);
         });
 
-        var hasCurrent = vals.some(function(o) {
-            return String(typeof o === "object" ? o.value : o)
-                === String(current);
-        });
-
-        if (hasCurrent) {
-            sel.value = current;
-        } else {
-            this._company = "";
-            sel.value = "";
-        }
+        select.value = oldValue;
+        if (select.value !== oldValue) this._classFilter = "";
     }
 
     _filtered() {
-        var q = this._search.toLowerCase();
-        var co = this._company;
+        var query = this._search.toLowerCase();
+        var assetClass = this._classFilter;
 
         return this._rows.map(function(row,index) {
             return {row:row,index:index};
         }).filter(function(item) {
-            var r = item.row;
-            var id = String(r.employeeId || r.positionId || "").toLowerCase();
-            var comp = String(r.companyCode || "");
+            var id = String(item.row.assetId || "").toLowerCase();
+            var cls = String(item.row.assetClass || "");
 
-            return (!q || id.indexOf(q) !== -1) &&
-                   (!co || comp === co);
+            return (!query || id.indexOf(query) !== -1) &&
+                   (!assetClass || cls === assetClass);
         });
     }
 
@@ -591,201 +605,279 @@ class CWIPAssetEntry extends HTMLElement {
     _render() {
         var self = this;
         var filtered = this._filtered();
-        var pages = this._pageCount();
+        var pageCount = this._pageCount();
 
-        if (this._page > pages) this._page = pages;
+        if (this._page > pageCount) this._page = pageCount;
 
         var start = (this._page - 1) * this._pageSize;
-        var items = filtered.slice(start,start + this._pageSize);
+        var pageItems = filtered.slice(start,start + this._pageSize);
 
-        var head =
-            '<th class="selhead">Sel ' +
-            '<input id="selectAll" class="check" type="checkbox">' +
-            '</th>';
+        this._syncClassFilter();
 
-        FIELDS.forEach(function(c) {
-            head += '<th style="width:' + c.width + 'px">' +
-                self._esc(c.label) + '</th>';
-        });
+        this.head.innerHTML =
+            '<th class="selhead">Sel <input id="selectAll" class="check" type="checkbox"></th>' +
+            FIELDS.map(function(col) {
+                return '<th style="width:' + col.width + 'px">' +
+                    self._esc(col.label) + '</th>';
+            }).join("");
 
-        this._el.head.innerHTML = head;
+        var selectAll = this.shadowRoot.getElementById("selectAll");
 
-        var allCheck = this.shadowRoot.getElementById("selectAll");
-
-        allCheck.checked = items.length > 0 &&
-            items.every(function(x) {
-                return self._selected.has(self._key(x.row,x.index));
+        selectAll.checked = pageItems.length > 0 &&
+            pageItems.every(function(item) {
+                return self._selected.has(self._key(item.row,item.index));
             });
 
-        allCheck.indeterminate = items.some(function(x) {
-            return self._selected.has(self._key(x.row,x.index));
-        }) && !allCheck.checked;
+        selectAll.onchange = function() {
+            pageItems.forEach(function(item) {
+                var key = self._key(item.row,item.index);
 
-        allCheck.onchange = function() {
-            items.forEach(function(x) {
-                var k = self._key(x.row,x.index);
-
-                if (allCheck.checked) {
-                    self._selected.add(k);
-                } else {
-                    self._selected.delete(k);
-                }
-
-                x.row.selected = allCheck.checked;
+                if (selectAll.checked) self._selected.add(key);
+                else self._selected.delete(key);
             });
 
             self._render();
-            self._fire("onDataChange",
-                "selectPage|" + self._page + "|" + allCheck.checked);
+            self._fire("onDataChange","selectPage|" + self._page);
         };
 
-        this._el.body.innerHTML = "";
+        this.body.innerHTML = "";
 
-        if (!items.length) {
-            this._el.body.innerHTML =
-                '<tr><td class="empty" colspan="' +
-                (FIELDS.length + 1) +
-                '">No matching records</td></tr>';
+        if (!pageItems.length) {
+            this.body.innerHTML =
+                '<tr><td class="empty" colspan="4">No matching records</td></tr>';
         }
 
-        items.forEach(function(item) {
-            var r = item.row;
-            var idx = item.index;
-            var k = self._key(r,idx);
+        pageItems.forEach(function(item) {
+            var row = item.row;
+            var index = item.index;
+            var key = self._key(row,index);
             var tr = document.createElement("tr");
 
-            if (self._selected.has(k)) tr.classList.add("selected");
+            if (self._selected.has(key)) tr.classList.add("selected");
 
-            var td = document.createElement("td");
-            td.className = "selhead";
+            var selectCell = document.createElement("td");
+            var checkbox = document.createElement("input");
 
-            var chk = document.createElement("input");
-            chk.type = "checkbox";
-            chk.className = "check";
-            chk.checked = self._selected.has(k);
+            checkbox.type = "checkbox";
+            checkbox.className = "check";
+            checkbox.checked = self._selected.has(key);
 
-            chk.onchange = function() {
-                if (chk.checked) {
-                    self._selected.add(k);
-                } else {
-                    self._selected.delete(k);
-                }
+            checkbox.onchange = function() {
+                if (checkbox.checked) self._selected.add(key);
+                else self._selected.delete(key);
 
-                r.selected = chk.checked;
                 self._render();
-                self._fire("onDataChange",
-                    "selectRow|" + idx + "|" + chk.checked);
+                self._fire("onDataChange","selectRow|" + index);
             };
 
-            td.appendChild(chk);
-            tr.appendChild(td);
+            selectCell.appendChild(checkbox);
+            tr.appendChild(selectCell);
 
-            FIELDS.forEach(function(c) {
-                var cell = document.createElement("td");
+            FIELDS.forEach(function(col) {
+                var td = document.createElement("td");
                 var control;
 
-                if (c.type === "select") {
-                    control = document.createElement("select");
-                    control.className = "cell";
-
-                    var opts = self._options[c.field] || [];
-                    var blank = document.createElement("option");
-
-                    blank.value = "";
-                    blank.textContent = "";
-                    control.appendChild(blank);
-
-                    opts.forEach(function(o) {
-                        var v = typeof o === "object" ? o.value : o;
-                        var txt = typeof o === "object" ?
-                            (o.text !== undefined ? o.text : o.value) : o;
-
-                        var op = document.createElement("option");
-                        op.value = String(v);
-                        op.textContent = String(txt);
-                        control.appendChild(op);
-                    });
-
-                    control.value = String(r[c.field] || "");
-
-                    if (!opts.length && r[c.field]) {
-                        var current = document.createElement("option");
-                        current.value = String(r[c.field]);
-                        current.textContent = String(r[c.field]);
-                        control.appendChild(current);
-                        control.value = String(r[c.field]);
-                    }
+                if (col.type === "select") {
+                    control = self._buildDropdown(row,index,col);
                 } else {
                     control = document.createElement("input");
+                    control.type = col.type;
                     control.className = "cell";
-                    control.type = c.type === "date" ? "date" : "text";
-                    control.value = r[c.field] || "";
+                    control.value = row[col.field] || "";
 
-                    if (c.readonly) control.readOnly = true;
+                    if (col.readonly) {
+                        control.readOnly = true;
+                        control.setAttribute("aria-label","Read-only Asset ID");
+                    }
+
+                    control.addEventListener("change",function() {
+                        if (col.readonly) return;
+
+                        row[col.field] = control.value;
+                        self._valid = null;
+                        self._errors = [];
+                        self._updateStatus();
+
+                        self._fire(
+                            "onFieldChange",
+                            "fieldChange|" + index + "|" +
+                            col.field + "|" + control.value
+                        );
+                    });
                 }
 
-                control.addEventListener("change",function() {
-                    r[c.field] = control.value;
-                    r.isModified = true;
-                    self._valid = null;
-                    self._updateStatus();
-
-                    self._fire("onFieldChange",
-                        "fieldChange|" + idx + "|" +
-                        c.field + "|" + control.value);
-                });
-
-                cell.appendChild(control);
-                tr.appendChild(cell);
+                td.appendChild(control);
+                tr.appendChild(td);
             });
 
-            self._el.body.appendChild(tr);
+            self.body.appendChild(tr);
         });
 
-        this._el.visibleCount.textContent = filtered.length;
+        this.visibleCount.textContent = filtered.length;
 
-        this._el.range.textContent = filtered.length ?
+        this.range.textContent = filtered.length ?
             "Showing " + (start + 1) + " to " +
             Math.min(start + this._pageSize,filtered.length) +
             " of " + filtered.length :
             "Showing 0 to 0 of 0";
 
-        this._el.page.textContent = "Page " + this._page + " of " + pages;
-        this._el.prev.disabled = this._page <= 1;
-        this._el.next.disabled = this._page >= pages;
+        this.page.textContent = "Page " + this._page + " of " + pageCount;
+        this.prev.disabled = this._page <= 1;
+        this.next.disabled = this._page >= pageCount;
 
         this._updateStatus();
     }
 
-    _updateStatus() {
-        this._el.total.textContent = this._rows.length;
-        this._el.selected.textContent = this._selected.size;
-        this._el.valid.textContent =
-            this._valid === null ? "-" : (this._valid ? "Valid" : "Invalid");
-        this._el.errors.textContent = this._errors.length;
+    _buildDropdown(row,index,col) {
+        var self = this;
+        var wrap = document.createElement("div");
+        wrap.className = "dropdown-wrap";
+
+        var value = row[col.field] || "";
+        var options = this._options.assetClass || [];
+        var open = this._openDropdown === index;
+
+        var selectedOption = options.find(function(option) {
+            var v = typeof option === "object" ? option.value : option;
+            return String(v) === String(value);
+        });
+
+        var label = selectedOption ?
+            (typeof selectedOption === "object" ?
+                (selectedOption.text !== undefined ?
+                    selectedOption.text : selectedOption.value) :
+                selectedOption) :
+            value;
+
+        var button = document.createElement("button");
+        button.type = "button";
+        button.className = "dropdown";
+
+        var valueSpan = document.createElement("span");
+        valueSpan.className = "dropdown-value" +
+            (label ? "" : " dropdown-placeholder");
+        valueSpan.textContent = label || "Select Asset Class";
+
+        var arrow = document.createElement("span");
+        arrow.textContent = open ? "▴" : "▾";
+
+        button.appendChild(valueSpan);
+        button.appendChild(arrow);
+
+        button.onclick = function(e) {
+            e.stopPropagation();
+            self._openDropdown = open ? null : index;
+            self._render();
+        };
+
+        wrap.appendChild(button);
+
+        if (!open) return wrap;
+
+        var panel = document.createElement("div");
+        panel.className = "dropdown-panel";
+
+        var search = document.createElement("input");
+        search.className = "dropdown-search";
+        search.placeholder = "Search asset class...";
+        search.type = "text";
+
+        var list = document.createElement("div");
+        list.className = "option-list";
+
+        panel.appendChild(search);
+        panel.appendChild(list);
+        wrap.appendChild(panel);
+
+        function renderOptions(query) {
+            list.innerHTML = "";
+            var q = query.toLowerCase();
+
+            var matches = options.filter(function(option) {
+                var v = typeof option === "object" ? option.value : option;
+                var text = typeof option === "object" ?
+                    (option.text !== undefined ? option.text : option.value) :
+                    option;
+
+                return String(text).toLowerCase().indexOf(q) !== -1 ||
+                       String(v).toLowerCase().indexOf(q) !== -1;
+            });
+
+            if (!matches.length) {
+                var empty = document.createElement("div");
+                empty.className = "no-options";
+                empty.textContent = "No matching asset classes";
+                list.appendChild(empty);
+                return;
+            }
+
+            matches.forEach(function(option) {
+                var v = typeof option === "object" ? option.value : option;
+                var text = typeof option === "object" ?
+                    (option.text !== undefined ? option.text : option.value) :
+                    option;
+
+                var opt = document.createElement("div");
+                opt.className = "option" +
+                    (String(v) === String(value) ? " active" : "");
+                opt.textContent = String(text);
+
+                opt.onclick = function(e) {
+                    e.stopPropagation();
+
+                    row.assetClass = String(v);
+                    self._openDropdown = null;
+                    self._valid = null;
+                    self._errors = [];
+                    self._render();
+
+                    self._fire(
+                        "onFieldChange",
+                        "fieldChange|" + index + "|assetClass|" + v
+                    );
+                };
+
+                list.appendChild(opt);
+            });
+        }
+
+        renderOptions("");
+
+        search.addEventListener("input",function() {
+            renderOptions(search.value);
+        });
+
+        search.addEventListener("click",function(e) {
+            e.stopPropagation();
+        });
+
+        return wrap;
     }
 
     _validate() {
-        var mandatory = [
-            "companyCode","division","department",
-            "costCenter","jobCode","positionTitle"
-        ];
-
         var errors = [];
 
-        this._rows.forEach(function(r,i) {
-            var has = ALL_FIELDS.some(function(f) {
-                return r[f] !== "" && r[f] !== null && r[f] !== undefined;
-            });
+        this._rows.forEach(function(row,index) {
+            if (!row.assetId) {
+                errors.push({row:index,field:"assetId",message:"Asset ID missing"});
+            }
 
-            if (has) {
-                var missing = mandatory.filter(function(f) {
-                    return !r[f];
+            if (!row.assetClass) {
+                errors.push({row:index,field:"assetClass",message:"Asset Class required"});
+            }
+
+            if (!row.capitalizedMonth) {
+                errors.push({
+                    row:index,
+                    field:"capitalizedMonth",
+                    message:"Capitalized Month required"
                 });
-
-                if (missing.length) {
-                    errors.push({row:i,fields:missing});
-                }
+            } else if (!/^\d{4}-\d{2}$/.test(row.capitalizedMonth)) {
+                errors.push({
+                    row:index,
+                    field:"capitalizedMonth",
+                    message:"Month must be YYYY-MM"
+                });
             }
         });
 
@@ -793,43 +885,51 @@ class CWIPAssetEntry extends HTMLElement {
         this._valid = errors.length === 0;
         this._updateStatus();
 
-        this._fire("onValidate",
-            (this._valid ? "VALID" : "INVALID") + "|" + errors.length);
+        this._fire(
+            "onValidate",
+            (this._valid ? "VALID" : "INVALID") + "|" + errors.length
+        );
     }
 
     _clearSelectedOrAll() {
         var self = this;
 
         if (this._selected.size) {
-            this._rows.forEach(function(r,i) {
-                if (self._selected.has(self._key(r,i))) {
-                    ALL_FIELDS.forEach(function(f) {
-                        if (f !== "employeeId") r[f] = "";
-                    });
-
-                    r.isModified = true;
+            this._rows.forEach(function(row,index) {
+                if (self._selected.has(self._key(row,index))) {
+                    /* Never clear the model-supplied Asset ID. */
+                    row.assetClass = "";
+                    row.capitalizedMonth = "";
                 }
             });
 
             this._selected.clear();
         } else {
-            this._rows.forEach(function(r) {
-                ALL_FIELDS.forEach(function(f) {
-                    if (f !== "employeeId") r[f] = "";
-                });
-
-                r.isModified = true;
+            /* With no selection, clear editable values for all rows. */
+            this._rows.forEach(function(row) {
+                row.assetClass = "";
+                row.capitalizedMonth = "";
             });
         }
 
         this._valid = null;
         this._errors = [];
+        this._openDropdown = null;
         this._render();
         this._fire("onClear","clear");
     }
 
-    _esc(v) {
-        return String(v == null ? "" : v)
+    _updateStatus() {
+        this.total.textContent = this._rows.length;
+        this.selected.textContent = this._selected.size;
+        this.valid.textContent =
+            this._valid === null ? "-" :
+            (this._valid ? "Valid" : "Invalid");
+        this.errors.textContent = this._errors.length;
+    }
+
+    _esc(value) {
+        return String(value == null ? "" : value)
             .replace(/&/g,"&amp;")
             .replace(/</g,"&lt;")
             .replace(/>/g,"&gt;")
