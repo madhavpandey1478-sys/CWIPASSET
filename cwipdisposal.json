@@ -1,0 +1,88 @@
+
+{
+  "id": "com.madhav.assetdisposal",
+  "version": "1.0.0",
+  "name": "CWIP ASSET DISPOSAL",
+  "description": "Asset ID and retirement month data entry widget",
+  "newInstancePrefix": "AssetDisposal",
+  "vendor": "Madhav Pandey",
+  "eula": "",
+  "license": "",
+  "webcomponents": [
+    {
+      "kind": "main",
+      "tag": "com-madhav-assetdisposal",
+      "url": "/assetdisposal.js",
+      "integrity": "",
+      "ignoreIntegrity": true
+    }
+  ],
+  "properties": {
+    "width": {
+      "type": "integer",
+      "default": 800
+    },
+    "height": {
+      "type": "integer",
+      "default": 500
+    }
+  },
+  "methods": {
+    "getLastEvent": {
+      "returnType": "string",
+      "description": "Returns the last event payload. Split by '|'."
+    },
+    "getData": {
+      "returnType": "string",
+      "description": "Returns all rows as a JSON string."
+    },
+    "getSelectedData": {
+      "returnType": "string",
+      "description": "Returns selected rows as a JSON string."
+    },
+    "setData": {
+      "description": "Replaces all rows. Pass a JSON array of asset disposal records.",
+      "parameters": [
+        {
+          "name": "data",
+          "type": "string",
+          "description": "JSON array with assetId and retirementMonth."
+        }
+      ]
+    },
+    "setCellValue": {
+      "description": "Sets a single cell value and re-renders.",
+      "parameters": [
+        {
+          "name": "rowIndex",
+          "type": "integer",
+          "description": "Zero-based row index."
+        },
+        {
+          "name": "fieldName",
+          "type": "string",
+          "description": "assetId (read-only) or retirementMonth."
+        },
+        {
+          "name": "value",
+          "type": "string",
+          "description": "Value to set; retirementMonth uses YYYY-MM."
+        }
+      ]
+    }
+  },
+  "events": {
+    "onReady": {
+      "description": "Fires when the widget is mounted. Use it to initialize data and dropdown options."
+    },
+    "onDataChange": {
+      "description": "Fires for Load Data, Save Changes, and row selection. Read getLastEvent() for the action payload."
+    },
+    "onFieldChange": {
+      "description": "Fires when Retirement Month changes. Payload: fieldChange|row|field|value."
+    },
+    "onClear": {
+      "description": "Fires when editable Retirement Month values are cleared."
+    }
+  }
+}
