@@ -2,7 +2,7 @@
 {
   "id": "com.madhav.assetdisposal",
   "version": "1.0.0",
-  "name": "CWIP ASSET DISPOSAL",
+  "name": "ASSET DISPOSAL",
   "description": "Asset ID and retirement month data entry widget",
   "newInstancePrefix": "AssetDisposal",
   "vendor": "Madhav Pandey",
