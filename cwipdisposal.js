@@ -261,8 +261,7 @@
     template.innerHTML =
         "<style>" + CSS + "</style>" +
         '<div class="wrap">' +
-            '<div class="widget-title">CWIP ASSET DISPOSAL</div>' +
-
+'<div class="widget-title">ASSET DISPOSAL</div>' +
             '<div class="top">' +
                 '<input id="search" class="search" ' +
                     'placeholder="Search Asset ID..." ' +
